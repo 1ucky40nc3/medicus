@@ -8,14 +8,13 @@ from PIL import Image
 import numpy as np
 
 import torch
-from torch.utils.data import Dataset
-from torch.utils.data import DataLoader
+
 
 from .utils import list_dataset_files
 from .utils import set_seed
 
 
-class U2NetRecipeDataset:
+class SharedTransformImageDataset:
     def __init__(
         self, 
         sample_dir: str,
