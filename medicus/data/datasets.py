@@ -22,7 +22,8 @@ class SharedTransformImageDataset:
         transform: Callable,
         target_transform: Callable,
         shared_transform: Callable,
-        share_transform_random_seed: bool = True
+        share_transform_random_seed: bool = True,
+        return_untransformed_sample: bool = True
     ) -> None:
         samples_list, targets_list = list_dataset_files(
             sample_dir, target_dir)
@@ -35,6 +36,7 @@ class SharedTransformImageDataset:
         self.target_transform = target_transform
         self.shared_transform = shared_transform
         self.share_transform_random_seed = share_transform_random_seed
+        self.return_untransformed_sample = return_untransformed_sample
 
     def __len__(self) -> int:
         return self.len
@@ -56,9 +58,8 @@ class SharedTransformImageDataset:
             seed = np.random.randint(2147483647)
             set_seed(seed)
                     
-                
         sample = self.shared_transform(sample)
-        input_sample = self.transform(sample)
+        input = self.transform(sample)
 
         if self.share_seed:
             set_seed(seed)
@@ -66,4 +67,6 @@ class SharedTransformImageDataset:
         target = self.shared_transform(target)
         target = self.target_transform(target)
         
-        return input_sample, sample, target
+        if self.return_untransformed_sample:
+            return input, sample, target
+        return input, target
