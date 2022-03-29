@@ -26,7 +26,7 @@ def tsum(
 def nnunet_softdiceloss(
     output: torch.Tensor,
     target: torch.Tensor,
-    nonlinearity: Callable = F.sigmoid,
+    nonlinearity: Callable = torch.sigmoid,
     smooth: float = 1e-5,
     eps: float = 1e-8
 ) -> torch.Tensor:
@@ -45,6 +45,32 @@ def nnunet_softdiceloss(
     denominator = 2 * tp + fp + fn + smooth
 
     loss = nominator / (denominator + eps)
+    return -loss
+
+
+def nnunet_softdiceloss_refactor(
+    output: torch.Tensor,
+    target: torch.Tensor,
+    nonlinearity: Callable = torch.sigmoid,
+    smooth: float = 1e-5,
+    eps: float = 1e-8
+) -> torch.Tensor:
+    output = nonlinearity(output)
+
+    A = output
+    B = target
+
+    intersection = output * target
+
+    # compute values as single value across batch
+    intersection = tsum(intersection)
+    A = tsum(A)
+    B = tsum(B)
+
+    nominator = 2 * intersection + smooth
+    denominator = A + B + smooth
+
+    loss = nominator / denominator
     return -loss
 
 
