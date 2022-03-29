@@ -9,6 +9,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
+# see: #https://github.com/MIC-DKFZ/nnUNet/blob/master/nnunet/utilities/tensor_utilities.py
 def tsum(
     tensor: torch.Tensor,
 ) -> torch.Tensor:
@@ -21,7 +22,7 @@ def tsum(
     return tensor
 
 
-# for reference see: https://github.com/MIC-DKFZ/nnUNet/blob/master/nnunet/training/loss_functions/dice_loss.py
+# see: https://github.com/MIC-DKFZ/nnUNet/blob/master/nnunet/training/loss_functions/dice_loss.py
 def nnunet_softdiceloss(
     output: torch.Tensor,
     target: torch.Tensor,
@@ -45,6 +46,21 @@ def nnunet_softdiceloss(
 
     loss = nominator / (denominator + eps)
     return -loss
+
+
+# see: https://github.com/MIC-DKFZ/nnUNet/blob/master/nnunet/training/loss_functions/dice_loss.py
+def bce_and_nnunet_softdiceloss(
+    output: torch.Tensor,
+    target: torch.Tensor,
+    bce_weight: float = 1.,
+    dice_weight: float = 1.
+) -> torch.Tensor:
+    bce = F.binary_cross_entropy_with_logits(
+        output, target)
+    dice = nnunet_softdiceloss(output, target)
+    loss = bce * bce_weight + dice (1 - dice_weight)
+
+    return loss
 
 
 # see: https://github.com/usuyama/pytorch-unet/blob/master/loss.py
@@ -74,14 +90,17 @@ def softdiceloss(
     return loss
 
 
-def bce_and_nnunet_softdiceloss(
+# see: https://github.com/usuyama/pytorch-unet/blob/master/pytorch_unet.ipynb
+def bce_and_softdiceloss(
     output: torch.Tensor,
     target: torch.Tensor,
-    bce_weight: float = 0.5,
+    bce_weight: float = 1.
 ) -> torch.Tensor:
     bce = F.binary_cross_entropy_with_logits(
         output, target)
-    dice = nnunet_softdiceloss(output, target)
-    loss = bce * bce_weight + dice (1 - bce_weight)
+    dice = softdiceloss(output, target)
+    loss = bce * bce_weight + dice * (1 - bce_weight)
 
     return loss
+
+
