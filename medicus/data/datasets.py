@@ -51,8 +51,8 @@ class SharedTransformImageDataset:
         sample = self.samples_list[index]
         target = self.targets_list[index]
 
-        sample = Image.open(sample).convert("RGB")
-        target = Image.open(target).convert("RGB")
+        sample = Image.open(sample).grayscale()
+        target = Image.open(target).grayscale()
 
         if self.share_seed():
             seed = np.random.randint(2147483647)
