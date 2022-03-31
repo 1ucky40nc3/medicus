@@ -120,8 +120,8 @@ def generate_rectangles_samples(
         class_color
     )
 
-    os.makedirs(os.join(directory, "input"), exist_ok=True)
-    os.makedirs(os.join(directory, "target"), exist_ok=True)
+    os.makedirs(os.path.join(directory, "input"), exist_ok=True)
+    os.makedirs(os.path.join(directory, "target"), exist_ok=True)
 
     for i in range(num_samples):
         fig, (inp, tgt) = plt.subplots(2)
