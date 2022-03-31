@@ -27,8 +27,8 @@ vinside = np.vectorize(
     inside, excluded=["lower_lim", "upper_lim"])
 
 
-def randn(n: int) -> np.ndarray:
-    normal = np.random.normal(size=n)
+def randn(n: int, scale: float = 1.) -> np.ndarray:
+    normal = np.random.normal(scale=scale, size=n)
     normal = vinside(normal, -1.5, 1.5)
     normal = (normal + 1.5) / 3
 
@@ -69,10 +69,11 @@ def random_rect_args(
     height: int,
     min_rect_scale: float,
     max_rect_scale: float,
-    class_color: str
+    class_color: str,
+    scale: float = 1.,
 ) -> dict:
-    x, y = randn(2)
-    w, h = randn(2)
+    x, y = randn(2, scale)
+    w, h = randn(2, scale)
     x = x * width
     y = y * height
     w = inside(w, min_rect_scale, max_rect_scale)
@@ -105,9 +106,13 @@ def generate_rectangles_samples(
     max_rect_scale: float = 0.4,
     directory: str = ".",
     file_prefix: str = "squares",
-    file_type: str = "png"
+    file_type: str = "png",
+    seed: int = None
 ) -> None:
     assert class_color in COLORS
+
+    if seed:
+        np.random.seed(seed)
 
     inp_background = np.ones((height, width, 3))
     tgt_background = np.zeros((height, width, 1))
@@ -133,7 +138,7 @@ def generate_rectangles_samples(
                 **random_rect_args(*args))
             inp.add_patch(patch)
         
-        rect_args = random_rect_args(*args)
+        rect_args = random_rect_args(*args, scale=0.5)
         inp_rect_args = {**rect_args, **{"c": class_color}}
         tgt_rect_args = {**rect_args, **{"c": "white"}}
 
