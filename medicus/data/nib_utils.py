@@ -140,15 +140,3 @@ def pad_and_crop(img, shape):
     cropped_img = padded_img.slicer[start_x : start_x + crop_x, :, start_y : start_y + crop_y] 
     return cropped_img
 
-
-def pad_image(self, shape_x, shape_y, image, const_value):
-  img_shape = image.shape
-  add_x0 = (shape_x - img_shape[-2])//2
-  add_x1 = shape_x - img_shape[-2] - add_x0
-
-  add_y0 = (shape_y - img_shape[-1])//2
-  add_y1 = shape_y - img_shape[-1] - add_y0
-
-  image_pad = np.pad(image, [(0,0),(add_x0,add_x1),(add_y0,add_y1)], mode = 'constant', constant_values = const_value)
-  
-  return image_pad
