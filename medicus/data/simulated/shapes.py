@@ -9,6 +9,8 @@ from matplotlib import colors
 from matplotlib import patches
 import matplotlib.pyplot as plt
 
+from PIL import Image
+
 from noise import generate_perlin_noise
 
 
@@ -260,6 +262,24 @@ def snowflake(
     return snowflake
 
 
+def random_gauss(
+    num: int = 200,
+    sigma: float = .5,
+    mu: float = 0.
+) -> np.ndarray:
+    min_x, max_x = np.random.rand(2)
+    min_y, max_y = np.random.rand(2)
+    min_x *= -1
+    min_y *= -1
+
+    x = np.linspace(min_x, max_x, num)
+    y = np.linspace(min_y, max_y, num)
+    x, y = np.meshgrid(x, y)
+    dist = np.sqrt(x**2 + y**2)
+
+    return np.exp(-((dist - mu)**2 / ( 2.0 * sigma**2)))
+
+
 def random_rect_args(
     width: int,
     height: int,
@@ -387,7 +407,7 @@ def save_figure_axes(
 ) -> None:
     extend = axes.get_window_extent(
         ).transformed(fig.dpi_scale_trans.inverted())
-    fig.savefig(file_path, bbox_inches=extend)
+    fig.savefig(file_path, bbox_inches=extend, padding=0)
 
 
 def generate_rectangles_samples(
@@ -576,4 +596,46 @@ def generate_snowflakes_samples(
         save_figure_axes(fig, inp, inp_path)
         save_figure_axes(fig, tgt, tgt_path)
 
-generate_snowflakes_samples(200, 200, 10)
+
+#generate_snowflakes_samples(200, 200, 10)
+
+
+def generate_gauss_samples(
+    dim: int,
+    num_samples: int = 20,
+    directory: str = ".",
+    file_prefix: str = "gauss",
+    file_type: str = "png",
+    seed: Optional[int] = None
+) -> None:
+    if seed:
+        np.random.seed(seed)
+
+    os.makedirs(os.path.join(directory, "input"), exist_ok=True)
+    os.makedirs(os.path.join(directory, "target"), exist_ok=True)
+
+    for i in range(num_samples):
+        gauss = random_gauss(dim)
+        noise = generate_perlin_noise(
+            height=dim, 
+            width=dim,
+            octaves=[1., 4., 10.], 
+            scaling=[1., 1, .125])
+        noise = noise.reshape((dim, dim))
+        noise = norm(noise) * 0.7
+
+        gauss = softmax(gauss)
+        gauss = norm(gauss)
+
+        inp_img = gauss * .7 + noise * .3
+        inp_img *= 255
+        tgt_img = gauss > .92
+
+        inp_path = os.path.join(directory, "input", f"{file_prefix}_{i}.{file_type}")
+        tgt_path = os.path.join(directory, "target", f"{file_prefix}_{i}.{file_type}")
+
+        Image.fromarray(inp_img).convert("RGB").save(inp_path)
+        Image.fromarray(tgt_img).convert("RGB").save(tgt_path)
+
+
+#generate_gauss_samples(200, 10)
