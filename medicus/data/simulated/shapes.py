@@ -565,7 +565,7 @@ def generate_snowflakes_samples(
         args = dict(xy=shape, closed=True)
         
         inp_patch = patches.Polygon(**args, color=class_color)
-        tgt_patch = patches.Polygon(**args, color="black")
+        tgt_patch = patches.Polygon(**args, color="white")
 
         inp.add_patch(inp_patch)
         tgt.add_patch(tgt_patch)
