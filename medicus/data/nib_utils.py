@@ -46,7 +46,7 @@ def reorient_to(img, axcodes_to=('P', 'I', 'R'), verb=False):
     return newimg
 
 
-def resample_nib(img, voxel_spacing=(1, 1, 1), order=3):
+def resample_nib(img, voxel_spacing=(1, 1, 1), order=3, verb = False):
     """Resamples the nifti from its original spacing to another specified spacing
     
     Parameters:
@@ -72,11 +72,12 @@ def resample_nib(img, voxel_spacing=(1, 1, 1), order=3):
         ]).astype(int))
     new_aff = rescale_affine(aff, shp, voxel_spacing, new_shp)
     new_img = nip.resample_from_to(img, (new_shp, new_aff), order=order, cval=-1024)
-    print("[*] Image resampled to voxel size:", voxel_spacing)
+    if verb:
+        print("[*] Image resampled to voxel size:", voxel_spacing)
     return new_img
 
 
-def resample_mask_to(msk, to_img):
+def resample_mask_to(msk, to_img, verb = False):
     """Resamples the nifti mask from its original spacing to a new spacing specified by its corresponding image
     
     Parameters:
@@ -92,17 +93,19 @@ def resample_mask_to(msk, to_img):
     to_img.header['bitpix'] = 8
     to_img.header['datatype'] = 2  # uint8
     new_msk = nib.processing.resample_from_to(msk, to_img, order=0)
-    print("[*] Mask resampled to image size:", new_msk.header.get_data_shape())
+    if verb:
+        print("[*] Mask resampled to image size:", new_msk.header.get_data_shape())
     return new_msk
 
 
-def pad_and_crop(img, shape):
-    """Shapes an image by padding (with 0) and center cropping
+ def pad_and_crop(img, shape, const_value = 0):
+    """Shapes an image by padding and center cropping
     
     Parameters:
     ----------
     img: nibabel image
     shape: a tuple of 2 integers specifying the desired new shape in x/y direction
+    const_value: pads the image with const_value
     
     Returns:
     ----------
