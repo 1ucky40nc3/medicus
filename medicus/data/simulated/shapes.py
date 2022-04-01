@@ -9,6 +9,9 @@ from matplotlib import colors
 from matplotlib import patches
 import matplotlib.pyplot as plt
 
+from noise import generate_perlin_noise
+
+
 Figure = Any
 Axes = Any
 
@@ -48,6 +51,10 @@ def random_color(
     p[class_index] = 0
 
     return np.random.choice(COLORS, p=p)
+
+
+def norm(v: np.ndarray) -> np.ndarray:
+    return (v - v.min()) / (v.max() - v.min())
 
 
 def rectangle(
@@ -138,6 +145,119 @@ def wedge(
         color=c,
         alpha=a
     )
+
+
+
+def koch_snowflake(order, scale=10):
+    """
+    Return two lists x, y of point coordinates of the Koch snowflake.
+
+    Parameters
+    ----------
+    order : int
+        The recursion depth.
+    scale : float
+        The extent of the snowflake (edge length of the base triangle).
+
+    source: https://matplotlib.org/stable/gallery/lines_bars_and_markers/fill.html
+    """
+    def _koch_snowflake_complex(order):
+        if order == 0:
+            # initial triangle
+            angles = np.array([0, 120, 240]) + 90
+            return scale / np.sqrt(3) * np.exp(np.deg2rad(angles) * 1j)
+        else:
+            ZR = 0.5 - 0.5j * np.sqrt(3) / 3
+
+            p1 = _koch_snowflake_complex(order - 1)  # start points
+            p2 = np.roll(p1, shift=-1)  # end points
+            dp = p2 - p1  # connection vectors
+
+            new_points = np.empty(len(p1) * 4, dtype=np.complex128)
+            new_points[::4] = p1
+            new_points[1::4] = p1 + dp / 3
+            new_points[2::4] = p1 + dp * ZR
+            new_points[3::4] = p1 + dp / 3 * 2
+            return new_points
+
+    points = _koch_snowflake_complex(order)
+    x, y = points.real, points.imag
+
+    #x = norm(x)
+    #y = norm(y)
+
+    xy = np.zeros((len(x), 2))
+    xy[:, 0] = x
+    xy[:, 1] = y
+    return xy
+
+
+def distance(p: np.ndarray) -> float:
+    return np.sqrt(p[0]**2 + p[1]**2)
+vdistance = np.vectorize(distance, signature="(n)->()")
+
+
+def softmax(
+    value: np.ndarray,
+    eps: float = 1.0
+) -> np.ndarray:
+    return np.exp(value * eps) / np.sum(np.exp(value))
+
+
+def add_noise(
+    v: float, 
+    n: np.ndarray, 
+) -> np.ndarray:
+    i = int(v * len(n)) % len(n)
+    return v + n[i, i]
+vadd_noise = np.vectorize(add_noise, excluded=["n"])
+
+
+def random_distort(
+    xy: np.ndarray
+) -> np.ndarray:
+    distances = vdistance(xy)
+    distances = softmax(distances, eps=np.random.rand())
+
+    x = xy[:, 0]
+    y = xy[:, 1]
+
+    x *= distances
+    y *= distances
+    x = norm(x)
+    y = norm(y)
+   
+    noise = generate_perlin_noise(
+        height=100,
+        width=100,
+        octaves=[1, 10],
+        scaling=[1., .05])
+    noise = (noise - .5) * .2
+
+    x = vadd_noise(x, n=noise)
+    y = vadd_noise(y, n=noise)
+
+    x = norm(x)
+    y = norm(y)
+
+    xy[:, 0] = x
+    xy[:, 1] = y
+
+    return xy
+
+
+def snowflake(
+    width: int,
+    height: int
+) -> np.ndarray:
+    order = np.random.randint(2, 6)
+    snowflake = koch_snowflake(order)
+    snowflake = random_distort(snowflake)
+    scale = np.random.rand()
+    snowflake[:, 0] = snowflake[:, 0] * width
+    snowflake[:, 1] = snowflake[:, 1] * height
+
+    return snowflake
 
 
 def random_rect_args(
@@ -279,7 +399,7 @@ def generate_rectangles_samples(
     min_rect_scale: float = 0.1,
     max_rect_scale: float = 0.4,
     directory: str = ".",
-    file_prefix: str = "squares",
+    file_prefix: str = "rectangles",
     file_type: str = "png",
     seed: int = None
 ) -> None:
@@ -403,4 +523,57 @@ def generate_shapes_samples(
         save_figure_axes(fig, tgt, tgt_path)
 
 
-generate_shapes_samples(200, 200, 10)
+#generate_shapes_samples(200, 200, 10)
+
+
+def generate_snowflakes_samples(
+    height: int,
+    width: int,
+    num_samples: int = 20,
+    num_snowflakes: int = 5,
+    class_color: str = "red",
+    directory: str = ".",
+    file_prefix: str = "snowflakes",
+    file_type: str = "png",
+    seed: Optional[int] = None
+) -> None:
+    if seed:
+        np.random.seed(seed)
+
+    inp_background = np.ones((height, width, 3))
+    tgt_background = np.zeros((height, width, 1))
+
+    os.makedirs(os.path.join(directory, "input"), exist_ok=True)
+    os.makedirs(os.path.join(directory, "target"), exist_ok=True)
+
+    for i in range(num_samples):
+        fig, (inp, tgt) = plt.subplots(2)
+
+        inp.imshow(inp_background)
+        tgt.imshow(tgt_background)
+
+        for j in range(num_snowflakes - 1):
+            shape = snowflake(width, height)
+            color = random_color(class_color)
+            patch = patches.Polygon(
+                xy=shape, 
+                closed=True,
+                color=color)
+            inp.add_patch(patch)
+        
+        shape = snowflake(width, height)
+        args = dict(xy=shape, closed=True)
+        
+        inp_patch = patches.Polygon(**args, color=class_color)
+        tgt_patch = patches.Polygon(**args, color="black")
+
+        inp.add_patch(inp_patch)
+        tgt.add_patch(tgt_patch)
+
+        inp_path = os.path.join(directory, "input", f"{file_prefix}_{i}.{file_type}")
+        tgt_path = os.path.join(directory, "target", f"{file_prefix}_{i}.{file_type}")
+
+        save_figure_axes(fig, inp, inp_path)
+        save_figure_axes(fig, tgt, tgt_path)
+
+generate_snowflakes_samples(200, 200, 10)
