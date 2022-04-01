@@ -132,7 +132,7 @@ def resample_mask_to(msk, to_img, verb = False):
       add_y1 = pad_y - y - add_y0
 
       pixel_array = img.get_fdata().copy()
-      image_pad = np.pad(pixel_array, [(add_x0,add_x1),(0,0),(add_y0,add_y1)], mode = 'constant', constant_values = 0)
+      image_pad = np.pad(pixel_array, [(add_x0,add_x1),(0,0),(add_y0,add_y1)], mode = 'constant', constant_values = const_value)
 
       padded_img = nib.Nifti1Image(image_pad, img.affine, img.header)
     
