@@ -140,3 +140,23 @@ def pad_and_crop(img, shape):
     cropped_img = padded_img.slicer[start_x : start_x + crop_x, :, start_y : start_y + crop_y] 
     return cropped_img
 
+
+def nifti_to_png(img, orientation, target_dir, start_index = 0):
+    """Creates png image from nifti-file in specified orientation
+    
+    Parameters:
+    ----------
+    img: nibabel image
+    orientation: an integer from 0 to 2 describing the slicing
+    target_dir: directiory where the images will be saved,
+
+    Returns:
+    ----------
+    
+    """
+    pixel_3d = np.array(img.get_fdata())
+    #pixel_3d = (pixel_3d + 1024)/4000
+    for i, pixel_2d in enumerate(pixel_3d):
+        img = Image.fromarray(pixel_2d).convert("L")
+        img.save(f'{target_dir}test{i + start_index}.png')
+
