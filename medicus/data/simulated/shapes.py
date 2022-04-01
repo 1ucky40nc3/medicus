@@ -100,7 +100,7 @@ def generate_rectangles_samples(
     height: int,
     width: int,
     num_samples: int,
-    num_squares: int = 20,
+    num_rects: int = 20,
     class_color: str = "red",
     min_rect_scale: float = 0.1,
     max_rect_scale: float = 0.4,
@@ -133,7 +133,7 @@ def generate_rectangles_samples(
 
         inp.imshow(inp_background)
         tgt.imshow(tgt_background)
-        for j in range(num_squares - 1):
+        for j in range(num_rects - 1):
             patch = rectangle(
                 **random_rect_args(*args))
             inp.add_patch(patch)
@@ -152,4 +152,4 @@ def generate_rectangles_samples(
         save_figure_axes(fig, tgt, tgt_path)
 
 
-generate_rectangles_samples(200, 200, 10)
+# generate_rectangles_samples(200, 200, 10)
