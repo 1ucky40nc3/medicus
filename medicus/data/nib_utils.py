@@ -98,7 +98,7 @@ def resample_mask_to(msk, to_img, verb = False):
     return new_msk
 
 
- def pad_and_crop(img, shape, const_value = 0):
+def pad_and_crop(img, shape, const_value = 0):
     """Shapes an image by padding and center cropping
     
     Parameters:
