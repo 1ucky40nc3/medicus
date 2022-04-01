@@ -407,7 +407,9 @@ def save_figure_axes(
 ) -> None:
     extend = axes.get_window_extent(
         ).transformed(fig.dpi_scale_trans.inverted())
-    fig.savefig(file_path, bbox_inches=extend, padding=0)
+    extend.x0 = 2.7364705882352944
+    extend.x1 = 3.823529411764706
+    fig.savefig(file_path, bbox_inches=extend)
 
 
 def generate_rectangles_samples(
@@ -511,7 +513,8 @@ def generate_shapes_samples(
     other_shapes.remove(class_shape)
 
     for i in range(num_samples):
-        fig, (inp, tgt) = plt.subplots(2)
+        fig, (_, inp, tgt) = plt.subplots(3)
+        _.imshow(inp_background)
 
         inp.imshow(inp_background)
         tgt.imshow(tgt_background)
@@ -539,11 +542,13 @@ def generate_shapes_samples(
         inp_path = os.path.join(directory, "input", f"{file_prefix}_{i}.{file_type}")
         tgt_path = os.path.join(directory, "target", f"{file_prefix}_{i}.{file_type}")
 
+        print("inp")
         save_figure_axes(fig, inp, inp_path)
+        print("tgt")
         save_figure_axes(fig, tgt, tgt_path)
 
 
-#generate_shapes_samples(200, 200, 10)
+generate_shapes_samples(200, 200, 10)
 
 
 def generate_snowflakes_samples(
