@@ -1,0 +1,154 @@
+from pathlib import Path
+from numpy.core.numeric import NaN
+import numpy as np
+import nibabel as nib
+import nibabel.processing as nip
+import nibabel.orientations as nio
+from scipy.ndimage import center_of_mass
+import matplotlib.pyplot as plt
+from matplotlib.colors import ListedColormap, Normalize
+from matplotlib.patches import Circle
+import json
+
+# define HU windows
+wdw_sbone = Normalize(vmin=-500, vmax=1300, clip=True)
+wdw_hbone = Normalize(vmin=-200, vmax=1000, clip=True)
+
+#########################
+# Resample and reorient #
+
+
+def reorient_to(img, axcodes_to=('P', 'I', 'R'), verb=False):
+    """Reorients the nifti from its original orientation to another specified orientation
+    
+    Parameters:
+    ----------
+    img: nibabel image
+    axcodes_to: a tuple of 3 characters specifying the desired orientation
+    
+    Returns:
+    ----------
+    newimg: The reoriented nibabel image 
+    
+    """
+    aff = img.affine
+    arr = np.asanyarray(img.dataobj, dtype=img.dataobj.dtype)
+    ornt_fr = nio.io_orientation(aff)
+    ornt_to = nio.axcodes2ornt(axcodes_to)
+    ornt_trans = nio.ornt_transform(ornt_fr, ornt_to)
+    arr = nio.apply_orientation(arr, ornt_trans)
+    aff_trans = nio.inv_ornt_aff(ornt_trans, arr.shape)
+    newaff = np.matmul(aff, aff_trans)
+    newimg = nib.Nifti1Image(arr, newaff)
+    if verb:
+        print("[*] Image reoriented from", nio.ornt2axcodes(ornt_fr), "to", axcodes_to)
+    return newimg
+
+
+def resample_nib(img, voxel_spacing=(1, 1, 1), order=3):
+    """Resamples the nifti from its original spacing to another specified spacing
+    
+    Parameters:
+    ----------
+    img: nibabel image
+    voxel_spacing: a tuple of 3 integers specifying the desired new spacing
+    order: the order of interpolation
+    
+    Returns:
+    ----------
+    new_img: The resampled nibabel image 
+    
+    """
+    # resample to new voxel spacing based on the current x-y-z-orientation
+    aff = img.affine
+    shp = img.shape
+    zms = img.header.get_zooms()
+    # Calculate new shape
+    new_shp = tuple(np.rint([
+        shp[0] * zms[0] / voxel_spacing[0],
+        shp[1] * zms[1] / voxel_spacing[1],
+        shp[2] * zms[2] / voxel_spacing[2]
+        ]).astype(int))
+    new_aff = rescale_affine(aff, shp, voxel_spacing, new_shp)
+    new_img = nip.resample_from_to(img, (new_shp, new_aff), order=order, cval=-1024)
+    print("[*] Image resampled to voxel size:", voxel_spacing)
+    return new_img
+
+
+def resample_mask_to(msk, to_img):
+    """Resamples the nifti mask from its original spacing to a new spacing specified by its corresponding image
+    
+    Parameters:
+    ----------
+    msk: The nibabel nifti mask to be resampled
+    to_img: The nibabel image that acts as a template for resampling
+    
+    Returns:
+    ----------
+    new_msk: The resampled nibabel mask 
+    
+    """
+    to_img.header['bitpix'] = 8
+    to_img.header['datatype'] = 2  # uint8
+    new_msk = nib.processing.resample_from_to(msk, to_img, order=0)
+    print("[*] Mask resampled to image size:", new_msk.header.get_data_shape())
+    return new_msk
+
+
+def pad_and_crop(img, shape):
+    """Shapes an image by padding (with 0) and center cropping
+    
+    Parameters:
+    ----------
+    img: nibabel image
+    shape: a tuple of 2 integers specifying the desired new shape in x/y direction
+    
+    Returns:
+    ----------
+    cropped_img: The nibabel image in the new shape
+    
+    """
+
+    # Get image shape, x,y,z -> x is y is z is
+
+    x,z,y = img.shape
+    crop_x, crop_y = shape
+    pad_x = x
+    pad_y = y
+    if (x < crop_x) or (y < crop_y):
+      if (x < crop_x):
+        pad_x = crop_x
+      if (y < crop_y):
+        pad_y = crop_y
+
+      add_x0 = (pad_x - x)//2
+      add_x1 = pad_x - x - add_x0
+
+      add_y0 = (pad_y - y)//2
+      add_y1 = pad_y - y - add_y0
+
+      pixel_array = img.get_fdata().copy()
+      image_pad = np.pad(pixel_array, [(add_x0,add_x1),(0,0),(add_y0,add_y1)], mode = 'constant', constant_values = 0)
+
+      padded_img = nib.Nifti1Image(image_pad, img.affine, img.header)
+    
+    start_x = pad_x//2-(crop_x//2)
+    start_y = pad_y//2-(crop_y//2)
+
+
+
+    cropped_img = padded_img.slicer[start_x : start_x + crop_x, :, start_y : start_y + crop_y] 
+    return cropped_img
+
+
+def pad_image(self, shape_x, shape_y, image, const_value):
+  img_shape = image.shape
+  add_x0 = (shape_x - img_shape[-2])//2
+  add_x1 = shape_x - img_shape[-2] - add_x0
+
+  add_y0 = (shape_y - img_shape[-1])//2
+  add_y1 = shape_y - img_shape[-1] - add_y0
+
+  image_pad = np.pad(image, [(0,0),(add_x0,add_x1),(add_y0,add_y1)], mode = 'constant', constant_values = const_value)
+  
+  return image_pad
