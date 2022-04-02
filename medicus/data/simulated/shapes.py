@@ -641,4 +641,4 @@ def generate_gauss_samples(
         Image.fromarray(tgt_img).convert("RGB").save(tgt_path)
 
 
-generate_gauss_samples(108, 10)
+#generate_gauss_samples(108, 10)
