@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 
 from PIL import Image
 
-from noise import generate_perlin_noise
+from medicus.data.simulated.noise import generate_perlin_noise
 
 
 Figure = Any
@@ -542,13 +542,11 @@ def generate_shapes_samples(
         inp_path = os.path.join(directory, "input", f"{file_prefix}_{i}.{file_type}")
         tgt_path = os.path.join(directory, "target", f"{file_prefix}_{i}.{file_type}")
 
-        print("inp")
         save_figure_axes(fig, inp, inp_path)
-        print("tgt")
         save_figure_axes(fig, tgt, tgt_path)
 
 
-generate_shapes_samples(200, 200, 10)
+#generate_shapes_samples(200, 200, 10)
 
 
 def generate_snowflakes_samples(
@@ -643,4 +641,4 @@ def generate_gauss_samples(
         Image.fromarray(tgt_img).convert("RGB").save(tgt_path)
 
 
-#generate_gauss_samples(200, 10)
+generate_gauss_samples(108, 10)
