@@ -46,7 +46,7 @@ class UNet(nn.Module):
     ) -> None:
         super().__init__()
 
-        self.down_conv = []
+        down_conv = []
         for i in range(6, 10):
             c_in = 2**(i - 1)
             c_out = 2**i
@@ -56,14 +56,16 @@ class UNet(nn.Module):
 
             self.down_conv.append(
                 UNetConvLayer(c_in, c_out))
+        self.down_conv = nn.ModuleList(down_conv)
         
-        self.up_conv = []
+        up_conv = []
         for i in reversed(range(7, 10)):
             c_in = 2**(i - 1) + 2**i
             c_out = 2**(i - 1)
 
             self.up_conv.append(
                 UNetConvLayer(c_in, c_out))
+        self.up_conv = nn.ModuleList(up_conv)
 
         self.last_conv = nn.Conv2d(
             in_channels=self.up_conv[-1].out_channels,
