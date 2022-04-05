@@ -93,7 +93,7 @@ def bce_and_nnunet_softdiceloss(
 def softdiceloss(
     output: torch.Tensor,
     target: torch.Tensor,
-    nonlinearity: Callable = F.sigmoid,
+    nonlinearity: Callable = torch.sigmoid,
     smooth: float = 1.
 ) -> torch.Tensor:
     output = nonlinearity(output)
