@@ -104,7 +104,7 @@ def softdiceloss(
     # compute dice per element in batch
     intersection = (A * B).sum(dim=2).sum(dim=2)
     A = A.sum(dim=2).sum(dim=2)
-    b = B.sum(dim=2).sum(dim=2)
+    B = B.sum(dim=2).sum(dim=2)
 
     nominator = 2. * intersection + smooth
     denominator = A + B + smooth
