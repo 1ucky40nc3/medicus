@@ -466,9 +466,39 @@ def generate_rectangles_samples(
 
         save_figure_axes(fig, inp, inp_path)
         save_figure_axes(fig, tgt, tgt_path)
+        plt.close()
 
 
-# generate_rectangles_samples(200, 200, 10)
+"""
+generate_rectangles_samples(
+    height=108, 
+    width=108, 
+    num_samples=10_000,
+    directory=os.path.join(
+        "medicus", "data", "simulated", ".rectangles", "train"
+    ),
+    seed=0
+)
+generate_rectangles_samples(
+    height=108, 
+    width=108, 
+    num_samples=2_000,
+    directory=os.path.join(
+        "medicus", "data", "simulated", ".rectangles", "test"
+    ),
+    seed=10_000
+)
+generate_rectangles_samples(
+    height=108, 
+    width=108, 
+    num_samples=200,
+    directory=os.path.join(
+        "medicus", "data", "simulated", ".rectangles", "eval"
+    ),
+    seed=12_000
+)
+"""
+
 shapes_mapping = {
     "square": {
         "args": random_square_args,
@@ -544,9 +574,31 @@ def generate_shapes_samples(
 
         save_figure_axes(fig, inp, inp_path)
         save_figure_axes(fig, tgt, tgt_path)
+        plt.close()
 
-
-#generate_shapes_samples(200, 200, 10)
+"""
+generate_shapes_samples(
+    height=108, 
+    width=108, 
+    num_samples=10_000,
+    directory="medicus\data\simulated\.shapes\train",
+    seed=0
+)
+generate_shapes_samples(
+    height=108, 
+    width=108, 
+    num_samples=2_000,
+    directory="medicus\data\simulated\.shapes\test",
+    seed=10_000
+)
+generate_shapes_samples(
+    height=108, 
+    width=108, 
+    num_samples=200,
+    directory="medicus\data\simulated\.shapes\eval",
+    seed=12_000
+)
+"""
 
 
 def generate_snowflakes_samples(
@@ -598,9 +650,32 @@ def generate_snowflakes_samples(
 
         save_figure_axes(fig, inp, inp_path)
         save_figure_axes(fig, tgt, tgt_path)
+        plt.close()
 
 
-#generate_snowflakes_samples(200, 200, 10)
+"""
+generate_snowflakes_samples(
+    height=108, 
+    width=108, 
+    num_samples=10_000,
+    directory="medicus\data\simulated\.snowflakes\train",
+    seed=0
+)
+generate_snowflakes_samples(
+    height=108, 
+    width=108, 
+    num_samples=2_000,
+    directory="medicus\data\simulated\.snowflakes\test",
+    seed=10_000
+)
+generate_snowflakes_samples(
+    height=108, 
+    width=108, 
+    num_samples=200,
+    directory="medicus\data\simulated\.snowflakes\eval",
+    seed=12_000
+)
+"""
 
 
 def generate_gauss_samples(
@@ -631,8 +706,12 @@ def generate_gauss_samples(
         gauss = norm(gauss)
 
         inp_img = gauss * .7 + noise * .3
-        inp_img *= 255
         tgt_img = gauss > .92
+
+        inp_img = inp_img - .05 * (tgt_img < .5)
+        inp_img *= 255
+        
+
 
         inp_path = os.path.join(directory, "input", f"{file_prefix}_{i}.{file_type}")
         tgt_path = os.path.join(directory, "target", f"{file_prefix}_{i}.{file_type}")
@@ -641,4 +720,28 @@ def generate_gauss_samples(
         Image.fromarray(tgt_img).convert("RGB").save(tgt_path)
 
 
-#generate_gauss_samples(108, 10)
+generate_gauss_samples(
+    dim=108, 
+    num_samples=10_000,
+    directory=os.path.join(
+        "medicus", "data", "simulated", ".gaussians", "train"
+    ),
+    seed=0)
+
+
+generate_gauss_samples(
+    dim=108, 
+    num_samples=2_000,
+    directory=os.path.join(
+        "medicus", "data", "simulated", ".gaussians", "test"
+    ),
+    seed=10_000)
+
+
+generate_gauss_samples(
+    dim=108, 
+    num_samples=200,
+    directory=os.path.join(
+        "medicus", "data", "simulated", ".gaussians", "eval"
+    ),
+    seed=12_000)
