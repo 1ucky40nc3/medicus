@@ -120,7 +120,7 @@ def softdiceloss(
 def bce_and_softdiceloss(
     output: torch.Tensor,
     target: torch.Tensor,
-    bce_weight: float = 1.
+    bce_weight: float = .5
 ) -> torch.Tensor:
     bce = F.binary_cross_entropy_with_logits(
         output, target)
