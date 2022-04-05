@@ -54,7 +54,7 @@ class UNet(nn.Module):
             if i == 6:
                 c_in = in_channels
 
-            self.down_conv.append(
+            down_conv.append(
                 UNetConvLayer(c_in, c_out))
         self.down_conv = nn.ModuleList(down_conv)
         
@@ -63,7 +63,7 @@ class UNet(nn.Module):
             c_in = 2**(i - 1) + 2**i
             c_out = 2**(i - 1)
 
-            self.up_conv.append(
+            up_conv.append(
                 UNetConvLayer(c_in, c_out))
         self.up_conv = nn.ModuleList(up_conv)
 
