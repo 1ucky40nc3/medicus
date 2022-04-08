@@ -115,34 +115,41 @@ def pad_and_crop(img, shape, const_value = 0):
 
     # Get image shape, x,y,z -> x is y is z is
 
-    x,z,y = img.shape
-    crop_x, crop_y = shape
+    x,y,z = img.shape
+    crop_x, crop_y, crop_z = shape
     pad_x = x
     pad_y = y
+    pad_z = z
     padded_img = img
-    if (x < crop_x) or (y < crop_y):
+    if (x < crop_x) or (y < crop_y) or (z < crop_z):
       if (x < crop_x):
         pad_x = crop_x
       if (y < crop_y):
         pad_y = crop_y
+      if (z < crop_z):
+        pad_z = crop_z
 
       add_x0 = (pad_x - x)//2
       add_x1 = pad_x - x - add_x0
 
       add_y0 = (pad_y - y)//2
       add_y1 = pad_y - y - add_y0
+        
+      add_z0 = (pad_z - z)//2
+      add_z1 = pad_z - z - add_z0
 
       pixel_array = img.get_fdata().copy()
-      image_pad = np.pad(pixel_array, [(add_x0,add_x1),(0,0),(add_y0,add_y1)], mode = 'constant', constant_values = const_value)
+      image_pad = np.pad(pixel_array, [(add_x0,add_x1),(add_z0,add_z1),(add_y0,add_y1)], mode = 'constant', constant_values = const_value)
 
       padded_img = nib.Nifti1Image(image_pad, img.affine, img.header)
     
-    start_x = pad_x//2-(crop_x//2)
-    start_y = pad_y//2-(crop_y//2)
+    start_x = pad_x//2 - (crop_x//2)
+    start_y = pad_y//2 - (crop_y//2)
+    start_z = pad_z//2 - (crop_z//2)
 
 
 
-    cropped_img = padded_img.slicer[start_x : start_x + crop_x, :, start_y : start_y + crop_y] 
+    cropped_img = padded_img.slicer[start_x : start_x + crop_x, start_y : start_y + crop_y, start_z : start_z + crop_z] 
     return cropped_img
 
 
