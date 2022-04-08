@@ -121,7 +121,7 @@ def pad_and_crop(img, shape, const_value = 0):
     pad_y = y
     #pad_z = z
     padded_img = img
-    if (x < crop_x) or (y < crop_y) or (z < crop_z):
+    if (x < crop_x) or (y < crop_y):
       if (x < crop_x):
         pad_x = crop_x
       if (y < crop_y):
