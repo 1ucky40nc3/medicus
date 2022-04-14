@@ -70,3 +70,82 @@ def list_dir_dataset_files(
 def set_seed(seed: int) -> None:
     random.seed(seed)
     torch.manual_seed(seed)
+
+    
+ def batch_to_img(img, mask, comb = True):
+    """
+    Funktion zur Darstellung eines Batches
+    ---
+    input:
+        img: Bild 5d-Array mit batchsize, channels, und 2d Bild
+        mask: Masken 5d-Array mit batchsize, channels, und 2d Maske
+        comb: Gibt an, ob ein Overlay-Bild erzeugt werden soll
+     
+    """
+  batch_size = img.shape[0]
+
+  if(comb):
+    fig, ax = plt.subplots(batch_size,3, figsize=(15,batch_size*5))
+    for i in range(batch_size):
+      x = img[i]
+      y = mask[i]
+      comb = torch.cat((x,x,y), dim = 0)
+
+      ax[i,0].imshow(x[0])
+      ax[i,1].imshow(y[0])
+      ax[i,2].imshow(np.dstack(comb))
+  else:
+    fig, ax = plt.subplots(batch_size,2, figsize=(15,batch_size*5))
+    for i in range(batch_size):
+      x = img[i]
+      y = mask[i]
+
+      ax[i,0].imshow(x[0])
+      ax[i,1].imshow(y[0])    
+
+def batch_to_pred(model, img, mask, comb = True):
+     """
+    Funktion zur Darstellung eines Batches und optischer Evaluation eines Models
+    ---
+    input:
+        model: Model, dessen Vorhersage für img gezeigt werden soll
+        img: Bild 5d-Array mit batchsize, channels, und 2d Bild
+        mask: Masken 5d-Array mit batchsize, channels, und 2d Maske
+        comb: Gibt an, ob ein Overlay-Bild erzeugt werden soll
+     
+    """
+  device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+  batch_size = img.shape[0]
+  inputs = img.to(device)
+
+  pred = model(inputs)
+  pred1 = torch.sigmoid(pred.cpu()) 
+
+  if(comb):
+    fig, ax = plt.subplots(batch_size,5, figsize=(15,batch_size*5))
+    for i in range(batch_size):
+      x = img[i]
+      y = mask[i]
+      z = pred1[i]
+      comb_mask = torch.cat((x,x,y), dim = 0)
+      comb_pred = torch.cat((x,x,z), dim = 0)
+
+      ax[i,0].imshow(x[0])
+      ax[i,1].imshow(y[0])
+      ax[i,2].imshow(np.dstack(comb_mask))
+      ax[i,3].imshow(z[0].detach().numpy())
+      ax[i,4].imshow(np.dstack(comb_pred.detach().numpy()))
+
+  else:
+    fig, ax = plt.subplots(batch_size,3, figsize=(15,batch_size*5))
+    for i in range(batch_size):
+      x = img[i]
+      y = mask[i]
+      z = pred1[i]
+
+      ax[i,0].imshow(x[0])
+      ax[i,1].imshow(y[0])
+      ax[i,2].imshow(z[0])
+
+    
+  
