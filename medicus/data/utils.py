@@ -8,7 +8,7 @@ import glob
 import random
 import torch
 import matplotlib.pyplot as plt
-improt numpy as np
+import numpy as np
 
 
 def filename(path: str) -> str:
