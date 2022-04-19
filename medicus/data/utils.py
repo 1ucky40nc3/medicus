@@ -44,8 +44,8 @@ def list_dataset_files(
 def list_dir_dataset_files(
     sample_dir: str, 
     target_dir: str,
-    sample_format: str=SAMPLE_FORMAT,
-    target_format: str=TARGET_FORMAT
+    sample_format: str=".png",
+    target_format: str=".png"
   ) -> Tuple[List[str], List[str]]:
     sample_dirs = [dir for dir in Path(sample_dir).iterdir()]
     target_dirs = [dir for dir in Path(sample_dir).iterdir()]
@@ -74,16 +74,16 @@ def set_seed(seed: int) -> None:
     torch.manual_seed(seed)
 
     
- def batch_to_img(img, mask, comb = True):
-    """
-    Funktion zur Darstellung eines Batches
-    ---
-    input:
-        img: Bild 5d-Array mit batchsize, channels, und 2d Bild
-        mask: Masken 5d-Array mit batchsize, channels, und 2d Maske
-        comb: Gibt an, ob ein Overlay-Bild erzeugt werden soll
-     
-    """
+def batch_to_img(img, mask, comb = True):
+  """
+  Funktion zur Darstellung eines Batches
+  ---
+  input:
+      img: Bild 5d-Array mit batchsize, channels, und 2d Bild
+      mask: Masken 5d-Array mit batchsize, channels, und 2d Maske
+      comb: Gibt an, ob ein Overlay-Bild erzeugt werden soll
+  
+  """
   batch_size = img.shape[0]
 
   if(comb):
@@ -106,16 +106,16 @@ def set_seed(seed: int) -> None:
       ax[i,1].imshow(y[0])    
 
 def batch_to_pred(model, img, mask, comb = True):
-     """
-    Funktion zur Darstellung eines Batches und optischer Evaluation eines Models
-    ---
-    input:
-        model: Model, dessen Vorhersage für img gezeigt werden soll
-        img: Bild 5d-Array mit batchsize, channels, und 2d Bild
-        mask: Masken 5d-Array mit batchsize, channels, und 2d Maske
-        comb: Gibt an, ob ein Overlay-Bild erzeugt werden soll
-     
-    """
+  """
+  Funktion zur Darstellung eines Batches und optischer Evaluation eines Models
+  ---
+  input:
+      model: Model, dessen Vorhersage für img gezeigt werden soll
+      img: Bild 5d-Array mit batchsize, channels, und 2d Bild
+      mask: Masken 5d-Array mit batchsize, channels, und 2d Maske
+      comb: Gibt an, ob ein Overlay-Bild erzeugt werden soll
+    
+  """
   device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
   batch_size = img.shape[0]
   inputs = img.to(device)
