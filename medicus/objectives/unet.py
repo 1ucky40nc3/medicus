@@ -93,7 +93,7 @@ def bce_and_nnunet_softdiceloss(
 def softdiceloss(
     output: torch.Tensor,
     target: torch.Tensor,
-    nonlinearity: Callable = F.sigmoid,
+    nonlinearity: Callable = torch.sigmoid,
     smooth: float = 1.
 ) -> torch.Tensor:
     output = nonlinearity(output)
@@ -104,7 +104,7 @@ def softdiceloss(
     # compute dice per element in batch
     intersection = (A * B).sum(dim=2).sum(dim=2)
     A = A.sum(dim=2).sum(dim=2)
-    b = B.sum(dim=2).sum(dim=2)
+    B = B.sum(dim=2).sum(dim=2)
 
     nominator = 2. * intersection + smooth
     denominator = A + B + smooth
@@ -120,7 +120,7 @@ def softdiceloss(
 def bce_and_softdiceloss(
     output: torch.Tensor,
     target: torch.Tensor,
-    bce_weight: float = 1.
+    bce_weight: float = .5
 ) -> torch.Tensor:
     bce = F.binary_cross_entropy_with_logits(
         output, target)

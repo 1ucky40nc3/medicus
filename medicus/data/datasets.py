@@ -1,7 +1,7 @@
 from typing import Tuple
-from typing import List
 from typing import Optional
 from typing import Callable
+from typing import Any
 
 from PIL import Image
 
@@ -9,9 +9,12 @@ import numpy as np
 
 import torch
 
-
 from .utils import list_dataset_files
 from .utils import set_seed
+
+
+def identity(x: Any):
+    return x
 
 
 class SharedTransformImageDataset:
@@ -19,9 +22,9 @@ class SharedTransformImageDataset:
         self, 
         sample_dir: str,
         target_dir: str,
-        transform: Callable,
-        target_transform: Callable,
-        shared_transform: Callable,
+        transform: Optional[Callable] = None,
+        target_transform: Optional[Callable] = None,
+        shared_transform: Optional[Callable] = None,
         share_transform_random_seed: bool = True,
         return_untransformed_sample: bool = True
     ) -> None:
@@ -32,9 +35,9 @@ class SharedTransformImageDataset:
         self.targets_list = targets_list
         self.len = len(samples_list)
 
-        self.transform = transform
-        self.target_transform = target_transform
-        self.shared_transform = shared_transform
+        self.transform = transform if transform else identity
+        self.target_transform = target_transform if target_transform else identity
+        self.shared_transform = shared_transform if shared_transform else identity
         self.share_transform_random_seed = share_transform_random_seed
         self.return_untransformed_sample = return_untransformed_sample
 
