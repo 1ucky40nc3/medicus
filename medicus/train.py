@@ -109,4 +109,3 @@ def train_model(model, optimizer, scheduler, dataloader, device, num_epochs=25, 
     model.load_state_dict(best_model_wts)
     return model
 
-
