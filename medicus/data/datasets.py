@@ -234,13 +234,14 @@ class UNetDataset:
                     
                 
         sample = self.shared_transform(sample)
-        input_sample = sample
+        input = self.transform(sample)
 
         if self.share_seed:
             set_seed(seed)
         
         target = self.shared_transform(target)
+        target = self.target_transform(target)
 
         
-        return input_sample/65535, sample/65535, (target>0.5).float()
+        return sample, input, target > 0.5
 

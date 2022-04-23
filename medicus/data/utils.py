@@ -50,7 +50,7 @@ def list_dir_dataset_files(
     target_format: str=".png"
   ) -> Tuple[List[str], List[str]]:
     sample_dirs = [dir for dir in Path(sample_dir).iterdir()]
-    target_dirs = [dir for dir in Path(sample_dir).iterdir()]
+    target_dirs = [dir for dir in Path(target_dir).iterdir()]
     samples_list = []
     targets_list = []
     for s_dir in sample_dirs:
@@ -105,7 +105,9 @@ def batch_to_img(img, mask, comb = True):
       y = mask[i]
 
       ax[i,0].imshow(x[0])
-      ax[i,1].imshow(y[0])    
+      ax[i,1].imshow(y[0])
+
+  plt.show()    
 
 def batch_to_pred(model, img, mask, comb = True):
   """
