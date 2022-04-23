@@ -3,6 +3,7 @@ from typing import List
 from typing import Optional
 from typing import Callable
 from pathlib import Path
+from PIL import Image
 
 import os
 import glob
@@ -152,3 +153,27 @@ def batch_to_pred(model, img, mask, comb = True):
 
     
   
+def save_data_as_png(target_dir, data, start_with = 0):
+  for i, (x, y) in enumerate(data):
+    x = (x + 1024)*65535/4095
+    y = y * 65535
+    img = Image.fromarray(x).convert('I')
+    mask = Image.fromarray(y).convert('I')
+    img.save(f'{target_dir}/images/file{i + start_with}.png')
+    mask.save(f'{target_dir}/masks/file{i + start_with}.png')
+
+def save_voxel_as_png(target_dir, data):
+  for i, (x, y) in enumerate(data):
+    img_path = target_dir + f'/images/pat{i}'
+    mask_path = target_dir + f'/masks/pat{i}'
+
+    if not os.path.exists(img_path): os.makedirs(img_path)
+    if not os.path.exists(mask_path): os.makedirs(mask_path)
+
+    x = (x + 1024)*65535/4095
+    y = y * 65535
+    for n, (img_slice, mask_slice) in enumerate(zip(x,y)):
+      img = Image.fromarray(img_slice).convert('I')
+      mask = Image.fromarray(mask_slice).convert('I')
+      img.save(f'{img_path}/file{n}.png')
+      mask.save(f'{mask_path}/file{n}.png')

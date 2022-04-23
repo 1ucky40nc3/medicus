@@ -78,7 +78,7 @@ class SharedTransformImageDataset:
         return input, target
 
 class NiftiImageDataset:
-    """Dataset which converts Nifti-Files to 2D Numpy-Arrays
+    """Dataset which converts Nifti-Files to 2D or 3D Numpy-Arrays
         
     Parameters:
     ----------
@@ -99,11 +99,17 @@ class NiftiImageDataset:
     images = []
     masks = []
 
-    def __init__(self, img_dir, mask_dir, new_shape = (160, 160), get_slices = True):
+    def __init__(
+        self,
+        img_dir: str,
+        mask_dir: str,
+        new_shape: Tuple = (160, 160),
+        get_slices: bool = True):
 
-        self.img_dir = img_dir
-        self.mask_dir = mask_dir
+        self.img_dir = Path(img_dir)
+        self.mask_dir = Path(mask_dir)
         self.new_shape = new_shape
+        
         for f in self.img_dir.iterdir():
           if f.is_dir():
             for n in f.iterdir():
