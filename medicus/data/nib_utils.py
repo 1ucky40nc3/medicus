@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap, Normalize
 from matplotlib.patches import Circle
 import json
-import medicus.utils.affines as ua
+from medicus.utils.affines import *
 
 # define HU windows
 wdw_sbone = Normalize(vmin=-500, vmax=1300, clip=True)
@@ -70,7 +70,7 @@ def resample_nib(img, voxel_spacing=(1, 1, 1), order=3, verb = False):
         shp[1] * zms[1] / voxel_spacing[1],
         shp[2] * zms[2] / voxel_spacing[2]
         ]).astype(int))
-    new_aff = ua.rescale_affine(aff, shp, voxel_spacing, new_shp)
+    new_aff = rescale_affine(aff, shp, voxel_spacing, new_shp)
     new_img = nip.resample_from_to(img, (new_shp, new_aff), order=order, cval=-1024)
     if verb:
         print("[*] Image resampled to voxel size:", voxel_spacing)
