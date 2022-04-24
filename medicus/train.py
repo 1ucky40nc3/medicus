@@ -68,7 +68,7 @@ def train_model(model, optimizer, scheduler, dataloader, device, num_epochs=25, 
             metrics = defaultdict(float)
             epoch_samples = 0
             
-            for x, inputs, labels in dataloader[phase]:
+            for inputs, labels in dataloader[phase]:
                 inputs = inputs.to(device)
                 labels = labels.to(device)             
 
