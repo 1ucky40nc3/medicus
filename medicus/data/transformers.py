@@ -15,6 +15,7 @@ class Normalize(object):
         return_bool: bool = False,
         max_value: int = 65535,
         ):
+        
         self.max_value = max_value
         self.return_bool = return_bool
 
