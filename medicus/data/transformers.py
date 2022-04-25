@@ -1,6 +1,7 @@
 from typing import Tuple
 from torchvision import transforms as T
 
+#TODO: TAke more from Monai
 
 class Normalize(object):
     """Normalizes the image from 0 to 1.
