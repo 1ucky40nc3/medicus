@@ -22,8 +22,8 @@ def filenames(paths: str) -> List[str]:
 def list_dataset_files(
     sample_dir: str, 
     target_dir: str,
-    sample_format: str=".png",
-    target_format: str=".png"
+    sample_format: str=".*",
+    target_format: str=".*"
 ) -> Tuple[List[str], List[str]]:
     samples_list = glob.glob(f"{sample_dir}/*{sample_format}")
     targets_list = glob.glob(f"{target_dir}/*{target_format}")
