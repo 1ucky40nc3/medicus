@@ -41,7 +41,19 @@ def print_metrics(metrics, epoch_samples, phase):
         
     print("{}: {}".format(phase, ", ".join(outputs)))    
 
-def train_model(model, optimizer, scheduler, dataloader, device, num_epochs=25, save_model = True, save_path = "", load_model = False, load_path = ""):
+def train_model(
+    model,
+    optimizer,
+    scheduler,
+    dataloader,
+    device,
+    num_epochs = 25,
+    save_model = False,
+    save_path = "",
+    load_model = False,
+    load_path = "",
+    writer = None,):
+
     if(load_model):
         model = torch.jit.load(load_path)
 
@@ -80,6 +92,7 @@ def train_model(model, optimizer, scheduler, dataloader, device, num_epochs=25, 
                 with torch.set_grad_enabled(phase == 'train'):
                     outputs = model(inputs)
                     loss = calc_loss(outputs, labels, metrics)
+                    writer.add_scalar("Loss/train", loss, epoch)
 
                     # backward + optimize only if in training phase
                     if phase == 'train':
