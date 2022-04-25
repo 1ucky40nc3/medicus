@@ -41,6 +41,12 @@ def print_metrics(metrics, epoch_samples, phase):
         
     print("{}: {}".format(phase, ", ".join(outputs)))    
 
+""" writer.add_scalar("Loss", total_loss, epoch)
+    writer.add_scalar("Correct", total_correct, epoch)
+    writer.add_scalar("Accuracy", total_correct/ len(train_set), epoch)
+    
+    TODO: Add train and test writer??"""
+
 def train_model(model, optimizer, scheduler, dataloader, device, num_epochs=25, save_model = True, save_path = "", load_model = False, load_path = ""):
     if(load_model):
         model = torch.jit.load(load_path)
