@@ -152,7 +152,7 @@ def batch_to_pred(model, img, mask, comb = True):
       ax[i,0].imshow(x[0])
       ax[i,1].imshow(y[0])
       ax[i,2].imshow(z[0])
-
+  plt.show()
     
   
 def save_data_as_png(target_dir, data, start_with = 0):
