@@ -54,10 +54,12 @@ def train_model(
     load_model = False,
     load_path = ""):
 
-    """ writer.add_scalar("Loss", total_loss, epoch)
+
+    
+    """
+    writer.add_scalar("Loss", total_loss, epoch)
     writer.add_scalar("Correct", total_correct, epoch)
     writer.add_scalar("Accuracy", total_correct/ len(train_set), epoch)
-    
     writer.add_hparams(
             {"lr": lr, "bsize": batch_size, "shuffle":shuffle},
             {
@@ -124,6 +126,15 @@ def train_model(
                 print("saving best model")
                 best_loss = epoch_loss
                 best_model_wts = copy.deepcopy(model.state_dict())
+                writer.add_scalar("Loss/val", best_loss, epoch)
+                writer.add_scalar("Dice/val", metrics['dice'], epoch)
+                outputs_grid = torchvision.utils.make_grid(outputs)
+                inputs_grid = torchvision.utils.make_grid(inputs)
+                labels_grid = torchvision.utils.make_grid(labels)
+                writer.add_image("prediction", outputs_grid)
+                writer.add_image("images", inputs_grid)
+                writer.add_image("truth", labels_grid)
+
                 if(save_model):
                   model_scripted = torch.jit.script(model) # Export to TorchScript
                   model_scripted.save(save_path) 
