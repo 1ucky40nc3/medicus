@@ -3,10 +3,10 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 class REBNCONV(nn.Module):
-    def __init__(self,in_ch=3,out_ch=3,dirate=1):
+    def __init__(self, in_ch = 1, out_ch = 1, dirate = 1):
         super(REBNCONV,self).__init__()
 
-        self.conv_s1 = nn.Conv2d(in_ch,out_ch,3,padding=1*dirate,dilation=1*dirate)
+        self.conv_s1 = nn.Conv2d(in_ch, out_ch, 3, padding = 1 * dirate, dilation = 1 * dirate)
         self.bn_s1 = nn.BatchNorm2d(out_ch)
         self.relu_s1 = nn.ReLU(inplace=True)
 
@@ -317,7 +317,7 @@ class RSU4F(nn.Module):#UNet04FRES(nn.Module):
 ##### U^2-Net ####
 class U2NET(nn.Module):
 
-    def __init__(self,in_ch=3,out_ch=1):
+    def __init__(self,in_ch = 1, out_ch = 1):
         super(U2NET,self).__init__()
 
         self.stage1 = RSU7(in_ch,32,64)
@@ -417,12 +417,14 @@ class U2NET(nn.Module):
 
         d0 = self.outconv(torch.cat((d1,d2,d3,d4,d5,d6),1))
 
-        return F.sigmoid(d0), F.sigmoid(d1), F.sigmoid(d2), F.sigmoid(d3), F.sigmoid(d4), F.sigmoid(d5), F.sigmoid(d6)
+        return F.sigmoid(d0)
+        #return F.sigmoid(d0), F.sigmoid(d1), F.sigmoid(d2), F.sigmoid(d3), F.sigmoid(d4), F.sigmoid(d5), F.sigmoid(d6)
+
 
 ### U^2-Net small ###
 class U2NETP(nn.Module):
 
-    def __init__(self,in_ch=3,out_ch=1):
+    def __init__(self, in_ch = 1, out_ch = 1):
         super(U2NETP,self).__init__()
 
         self.stage1 = RSU7(in_ch,16,64)
@@ -523,3 +525,4 @@ class U2NETP(nn.Module):
         d0 = self.outconv(torch.cat((d1,d2,d3,d4,d5,d6),1))
 
         return F.sigmoid(d0), F.sigmoid(d1), F.sigmoid(d2), F.sigmoid(d3), F.sigmoid(d4), F.sigmoid(d5), F.sigmoid(d6)
+        #return F.sigmoid(d0), F.sigmoid(d1), F.sigmoid(d2), F.sigmoid(d3), F.sigmoid(d4), F.sigmoid(d5), F.sigmoid(d6)
