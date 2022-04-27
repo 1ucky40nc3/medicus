@@ -184,6 +184,7 @@ def train(
     lr_scheduler: LRScheduler,
     train_dataloader: DataLoader,
     eval_dataloader: DataLoader,
+    add_dice: bool = False,
     num_epochs: int = 20,
     model_config: Dict[str, Any] = {},
     optimizer_config: Dict[str, Any] = {},
@@ -304,11 +305,11 @@ def train(
                     metric = MeanMetric()
 
                     iterator.set_postfix(
-                        mean_loss=mean_loss.item())
+                        mean_loss = mean_loss.item())
                     writer.add_scalar(
                         "Loss/train_mean_log_step",
-                        scalar_value=mean_loss, 
-                        global_step=global_step)
+                        scalar_value = mean_loss, 
+                        global_step = global_step)
                 
                 if global_step % eval_every == 0:
                     outputs = inference(
@@ -316,7 +317,7 @@ def train(
 
                     writer.add_images(
                         f"Images/eval_img_outputs",
-                        img_tensor=masks2imgs(outputs),
+                        img_tensor=outputs,
                         global_step=global_step)
 
                     eval_mean_loss = evaluate(
@@ -328,10 +329,24 @@ def train(
                     
                     iterator.set_postfix(
                         eval_mean_loss=eval_mean_loss.item())
+
                     writer.add_scalar(
                         "Loss/eval_mean",
                         eval_mean_loss,
                         global_step=global_step)
+
+                    if(add_dice):
+                        eval_mean_dice = evaluate_dice_loss(
+                        model, 
+                        eval_dataloader, 
+                        dice_loss, 
+                        device=device,
+                        tqdm_config=tqdm_config)
+                            
+                        writer.add_scalar(
+                            "Dice/val",
+                            eval_mean_dice,
+                            global_step = global_step)
                     
                 if global_step % save_every == 0:
                     torch.save({
@@ -344,6 +359,39 @@ def train(
                         "test_samples": test_samples,
                         "test_targets": test_targets
                     }, f"{save_dir}/ckpt_{global_step}")
+
+
+def evaluate_dice_loss(
+    model,
+    dataloader: DataLoader,
+    loss_fn: Callable,
+    device: Device,
+    log_every: int = 50,
+    desc: str = "Evaluating...",
+    tqdm_config: dict = {}
+) -> Any:
+    model.eval()
+
+    metric = MeanMetric()
+    with torch.no_grad():
+        with tqdm(dataloader, desc=desc, unit="batch", **tqdm_config) as iterator:
+            for i, (x, y) in enumerate(iterator):
+                x = x.to(device)
+                y = y.to(device)
+
+                outputs = model(x)
+
+                outputs = TNF.sigmoid(outputs)
+                loss = loss_fn(outputs, y)
+                #TODO: find out if necessary
+                metric.update(loss.cpu())
+
+                if (i + 1) % log_every == 0:
+                    iterator.set_postfix(
+                        mean_loss=metric.compute().item())
+
+    return metric.compute()
+
 
 
 def timestamp() -> str:
