@@ -17,6 +17,9 @@ import numpy as np
 import torch.nn as nn
 from torch.utils import tensorboard
 from torchmetrics import MeanMetric
+from torch.optim import lr_scheduler
+from torch.utils.data import DataLoader
+from torchsummary import summary
 
 import torchvision.transforms.functional as F
 
@@ -31,6 +34,9 @@ import time
 import copy
 
 from collections import defaultdict
+
+Device = Any
+LRScheduler = Any
 
 def dice_loss(pred, target, smooth = 1.):
     pred = pred.contiguous()
@@ -172,7 +178,7 @@ def train_model(
 
 
 def train(
-    model: nn.Module,
+    model,
     loss_fn: Callable,
     optimizer: optim.Optimizer,
     lr_scheduler: LRScheduler,
@@ -190,6 +196,7 @@ def train(
     eval_every: int = 4_000,
     save_every: int = 20_000,
 ) -> None:
+
     run_id = timestamp()
     log_dir = log_dir.format(run_id)
     save_dir = save_dir.format(run_id)
@@ -211,14 +218,15 @@ def train(
     writer = tensorboard.SummaryWriter(log_dir=log_dir)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model = model(**model_config)
+    #model = model(**model_config)
     model = model.to(device)
 
     sample, _ = next(iter(train_dataloader))
     summary(model, input_size=sample.shape[1:])
 
-    optimizer = optimizer(model.parameters(), **optimizer_config)
-    lr_scheduler = lr_scheduler(optimizer, **lr_scheduler_config)
+    #optimizer = optimizer(model.parameters(), **optimizer_config)
+    #lr_scheduler = lr_scheduler(optimizer, **lr_scheduler_config)
+    #TODO: a lot
 
     resume_epoch = 0
     resume_step = 0
@@ -254,7 +262,7 @@ def train(
     
     writer.add_images(
         f"Images/eval_img_targets",
-        img_tensor=masks2imgs(test_targets),
+        img_tensor=test_targets,
         global_step=global_step)
 
     for i in range(resume_epoch, num_epochs):
@@ -336,3 +344,110 @@ def train(
                         "test_samples": test_samples,
                         "test_targets": test_targets
                     }, f"{save_dir}/ckpt_{global_step}")
+
+
+def timestamp() -> str:
+    return time.strftime(
+        "%Y%m%d%H%M%S", 
+        time.localtime()
+    )
+
+def evaluate(
+    model,
+    dataloader: DataLoader,
+    loss_fn: Callable,
+    device: Device,
+    log_every: int = 50,
+    desc: str = "Evaluating...",
+    tqdm_config: dict = {}
+) -> Any:
+    model.eval()
+
+    metric = MeanMetric()
+    with torch.no_grad():
+        with tqdm(dataloader, desc=desc, unit="batch", **tqdm_config) as iterator:
+            for i, (x, y) in enumerate(iterator):
+                x = x.to(device)
+                y = y.to(device)
+
+                outputs = model(x)
+                loss = loss_fn(outputs, y)
+                metric.update(loss.cpu())
+
+                if (i + 1) % log_every == 0:
+                    iterator.set_postfix(
+                        mean_loss=metric.compute().item())
+
+    return metric.compute()
+
+def inference(
+    model,
+    samples: torch.Tensor,
+    device: Device
+) -> Tuple[torch.Tensor]:
+    with torch.no_grad():
+        samples = samples.to(device)
+        outputs = model(samples)
+
+    return outputs
+
+def parse(config) -> dict:
+    return {
+        "model": {
+            "name": "Test",#config["model"].__name__
+            "config": config["model_config"]
+        },
+        "loss_fn": config["loss_fn"].__name__,
+        "optimizer": {
+            "name": "Test", #config["optimizer"].__name__,
+            "config": config["optimizer_config"]
+        },
+        "lr_scheduler": {
+            "name": "Test",#config["lr_scheduler"].__name__,
+            "config": config["lr_scheduler_config"]
+        },
+        "num_epochs": config["num_epochs"],
+        "log_dir": config["log_dir"],
+        "save_dir": config["save_dir"],
+        "log_every": config["log_every"],
+        "eval_every": config["eval_every"],
+        "save_every": config["save_every"]
+    }
+
+def masks_to_colorimg(masks):
+    colors = np.asarray([
+        (201, 58, 64), 
+        (242, 207, 1), 
+        (0, 152, 75), 
+        (101, 172, 228), 
+        (56, 34, 132), 
+        (160, 194, 56)
+    ])
+
+    # shape: [H, W, 3]
+    colorimg = np.ones(
+        (masks.shape[1], masks.shape[2], 3), 
+        dtype=np.float32
+    ) * 255
+    channels, height, width = masks.shape
+
+    for y in range(height):
+        for x in range(width):
+            selected_colors = colors[masks[:,y,x] > 0.5]
+
+            if len(selected_colors) > 0:
+                colorimg[y,x,:] = np.mean(selected_colors, axis=0)
+
+    return colorimg.astype(np.uint8)
+  
+
+def masks2imgs(masks: torch.Tensor) -> torch.Tensor:
+    masks = masks.cpu().numpy()
+
+    imgs = []
+    for mask in masks:
+        img = masks_to_colorimg(mask)
+        img = F.to_tensor(img)
+        imgs.append(img)
+    
+    return torch.stack(imgs)
