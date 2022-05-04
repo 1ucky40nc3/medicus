@@ -11,6 +11,7 @@ import random
 import torch
 import matplotlib.pyplot as plt
 import numpy as np
+from natsort import natsorted
 
 
 def filename(path: str) -> str:
@@ -32,8 +33,8 @@ def list_dataset_files(
     samples_list = glob.glob(f"{sample_dir}/*{sample_format}")
     targets_list = glob.glob(f"{target_dir}/*{target_format}")
 
-    samples_list = list(sorted(samples_list))
-    targets_list = list(sorted(targets_list))
+    samples_list = list(natsorted(samples_list))
+    targets_list = list(natsorted(targets_list))
 
     assert len(samples_list) > 0, "ERROR: No samples were found!"
     assert len(targets_list) > 0, "ERROR: No targets were found!"
@@ -58,8 +59,8 @@ def list_dir_dataset_files(
     for t_dir in target_dirs:
       targets_list.extend(glob.glob(f"{t_dir}/*{target_format}"))
 
-    samples_list = list(sorted(samples_list))
-    targets_list = list(sorted(targets_list))
+    samples_list = list(natsorted(samples_list))
+    targets_list = list(natsorted(targets_list))
 
 
     print(len(samples_list),len(targets_list))
