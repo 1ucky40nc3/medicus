@@ -89,11 +89,12 @@ class NiftiImageDataset:
     Parameters:
     ----------
     img_dir:  Directory where the image nifti files are stored
-              each patient needs its own directory
+    pat_dir:  each patient needs its own directory or not
     mask_dir: Directory where the mask nifti files are stored
               each patient needs its own directory (same name as in img_dir)
     new_shape: shape which the images will be cropped/padded
     get_slices: tells, if output should be bitmap (True) or voxelmap(False)
+    sizing: tells, if output should be giving back with each pixel sized to 1mm or not
 
     
     Returns:
@@ -109,26 +110,42 @@ class NiftiImageDataset:
         self,
         img_dir: str,
         mask_dir: str,
+        pat_dir: bool,
         new_shape: Tuple = (160, 160),
-        get_slices: bool = True):
+        get_slices: bool = True,
+        sizing: bool = True):
 
         self.img_dir = Path(img_dir)
         self.mask_dir = Path(mask_dir)
         self.new_shape = new_shape
+        self.sizing = sizing
         
-        for f in self.img_dir.iterdir():
-          if f.is_dir():
-            for n in f.iterdir():
-              if not n.is_dir():
-                file_name, file_extension = os.path.splitext(n)
+        if(self.pat_dir):
+          for f in self.img_dir.iterdir():
+            if f.is_dir():
+              for n in f.iterdir():
+                if not n.is_dir():
+                  file_name, file_extension = os.path.splitext(n)
 
-                if (file_extension == ".gz"):
-                  mask_dir_file = os.path.join(self.mask_dir, os.path.basename(f) )+ "/"
+                  if (file_extension == ".gz"):
+                    mask_dir_file = os.path.join(self.mask_dir, os.path.basename(f) )+ "/"
 
-                  for mask in Path(mask_dir_file).iterdir():
-                    mask_name, mask_extension = os.path.splitext(mask)
-                    if (mask_extension == ".gz"):
-                      self.files.append(self.combine_files(n, mask))
+                    for mask in Path(mask_dir_file).iterdir():
+                      mask_name, mask_extension = os.path.splitext(mask)
+                      if (mask_extension == ".gz"):
+                        self.files.append(self.combine_files(n, mask))
+        else:
+          for f in self.img_dir.iterdir():
+            if not f.is_dir():
+              file_name, file_extension = os.path.splitext(n)
+
+              if (file_extension == ".gz"):
+                mask_dir_file = os.path.join(self.mask_dir, os.path.basename(f) )+ "/"
+
+                for mask in Path(mask_dir_file).iterdir():
+                  mask_name, mask_extension = os.path.splitext(mask)
+                  if (mask_extension == ".gz"):
+                    self.files.append(self.combine_files(n, mask))
 
         len_files = len(self.files)
         for i in range(len_files):
@@ -142,9 +159,12 @@ class NiftiImageDataset:
           img_canon = nib.as_closest_canonical(img)
           mask_canon = nib.as_closest_canonical(mask)
 
-          res_img = resample_nib(img_canon)
-          res_mask = resample_mask_to(mask_canon, res_img)
-
+          if(self.sizing):
+            res_img = resample_nib(img_canon)
+            res_mask = resample_mask_to(mask_canon, res_img)
+          else:
+            res_img = img_canon
+            res_mask = mask_canon
 
           pad_img = pad_and_crop(res_img, self.new_shape, -1024)
           pad_mask = pad_and_crop(res_mask, self.new_shape, 0)
