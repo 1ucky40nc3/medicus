@@ -119,6 +119,7 @@ class NiftiImageDataset:
         self.mask_dir = Path(mask_dir)
         self.new_shape = new_shape
         self.sizing = sizing
+        self.pat_dir = pat_dir
         
         if(self.pat_dir):
           for f in self.img_dir.iterdir():
@@ -135,12 +136,13 @@ class NiftiImageDataset:
                       if (mask_extension == ".gz"):
                         self.files.append(self.combine_files(n, mask))
         else:
-          for f in self.img_dir.iterdir():
-            if not f.is_dir():
+          f = self.img_dir
+          for n in f.iterdir():
+            if not n.is_dir():
               file_name, file_extension = os.path.splitext(n)
 
               if (file_extension == ".gz"):
-                mask_dir_file = os.path.join(self.mask_dir, os.path.basename(f) )+ "/"
+                mask_dir_file = self.mask_dir
 
                 for mask in Path(mask_dir_file).iterdir():
                   mask_name, mask_extension = os.path.splitext(mask)

@@ -23,7 +23,7 @@ class Normalize(object):
     def __call__(self, image):
         image = image/self.max_value
         if(self.return_bool):
-            image = (image > 0.5).float()
+            image = (image > 0.1).float()
         return image
 
 def shared_transform(
