@@ -53,9 +53,4 @@ def predict_pat(
             img.save(f'{save_dir}/file{n}.png')
             n = n + 1
 
-        for pred in y:
-            pred =  (pred[0] > 0.5).float().numpy() * 255
-            img = Image.fromarray(pred).convert("RGB")
-            img.save(f'C:/Users/Max Beyer/ML_data/predictions2/mask{i}.png')
-            i = i + 1
 
