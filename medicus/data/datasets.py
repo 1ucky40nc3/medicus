@@ -63,8 +63,8 @@ class SharedTransformImageDataset:
         sample = self.samples_list[index]
         target = self.targets_list[index]
 
-        sample = Image.open(sample)
-        target = Image.open(target)
+        sample = Image.open(sample).convert("L")
+        target = Image.open(target).convert("L")
 
         if self.share_seed():
             seed = np.random.randint(2147483647)

@@ -34,7 +34,7 @@ def predict_pat(
 
     state_dict = torch.load(resume_from)
 
-    model.load_state_dict(state_dict["model"])
+    model.load_state_dict(state_dict["model"],strict=False)
 
     model.eval()
    

@@ -1,7 +1,7 @@
 from typing import Tuple
 from torchvision import transforms as T
 
-#TODO: TAke more from Monai
+#TODO: Take more from Monai
 
 class Normalize(object):
     """Normalizes the image from 0 to 1.
@@ -26,13 +26,16 @@ class Normalize(object):
             image = (image > 0.1).float()
         return image
 
+
 def shared_transform(
-    crop: bool = True,
+    crop: bool = False,
     crop_size: Tuple = (50,50),
+    center_crop: bool = True,
+    center_crop_size: Tuple = (160,160),
     input_size: Tuple = (160, 160),
-    rotate: bool = True,
+    rotate: bool = False,
     rotate_range: Tuple = (-30, 30),
-    affine: bool = True,
+    affine: bool = False,
     translation_range: Tuple = (0, 0.5),
     p: int = 0.2,
     ):
@@ -63,9 +66,17 @@ def shared_transform(
         )
     
 
+    if (center_crop):
+        return T.Compose([
+        T.ToTensor(),
+        T.CenterCrop(center_crop_size),
+        T.RandomApply(transformers, p = p)                 
+        ])
+            
 
 
     if(len(transformers) > 0):
+
         return T.Compose([
         T.ToTensor(),
         T.RandomApply(transformers, p = p)                 
@@ -75,10 +86,11 @@ def shared_transform(
         T.ToTensor(),               
         ])
 
+
 sample_transform = T.Compose([
-    Normalize(),
+    #Normalize(),
 ])
 
 target_transform = T.Compose([
-    Normalize(return_bool = True),
+    #Normalize(return_bool = True),
 ])
