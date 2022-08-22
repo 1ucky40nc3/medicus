@@ -29,13 +29,9 @@ def predict_pat(
     print(f"Saving predictions at: {save_dir}")
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model = model(**model_config)
+
+    model = torch.load(resume_from)
     model = model.to(device)
-
-    state_dict = torch.load(resume_from)
-
-    model.load_state_dict(state_dict["model"],strict=False)
-
     model.eval()
    
     n = 0

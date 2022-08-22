@@ -358,7 +358,9 @@ def train(
                         "step": j,
                         "test_samples": test_samples,
                         "test_targets": test_targets
-                    }, f"{save_dir}/ckpt_{global_step}")
+                    }, f"{save_dir}/ckpt_{global_step}.pth")
+
+                    torch.save(model, f"{save_dir}/model_{global_step}.pth")
 
 
 def evaluate_dice_loss(
