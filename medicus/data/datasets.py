@@ -4,15 +4,22 @@ from typing import Callable
 from typing import Any
 
 
+from pathlib import Path
+
+
 import numpy as np
+import nibabel as nib
 
 from PIL import Image
 
 import torch
 
-from .utils import list_dataset_files
-from .utils import set_seed
 
+import torch
+import os 
+
+from medicus.data.utils import list_dataset_files, list_dir_dataset_files, set_seed
+from medicus.data.nib_utils import *
 
 def identity(x: Any):
     return x
@@ -59,12 +66,18 @@ class SharedTransformDataset:
         shared_transform: Optional[Callable] = None,
         share_transform_random_seed: bool = True,
         return_untransformed_sample: bool = True,
+        pat_dir: bool = False,
         sample_format: str = ".png",
         target_format: str = ".png",
         **kwargs
     ) -> None:
-        samples_list, targets_list = list_dataset_files(
-            sample_dir, target_dir, sample_format, target_format)
+        #pat_dir -> True: für jeden Patienten existiert ein einzelner Unterordner, False: alle Dateien im gleichen Ordner
+        if(pat_dir):
+          samples_list, targets_list = list_dir_dataset_files(
+              sample_dir, target_dir)
+        else:
+          samples_list, targets_list = list_dataset_files(
+              sample_dir, target_dir)
 
         self.samples_list = samples_list
         self.targets_list = targets_list
@@ -216,3 +229,129 @@ class SharedTransformNumpyDataset(SharedTransformDataset):
     
     def load(self, path: str) -> np.ndarray:
         return np.load(path)
+
+class NiftiImageDataset:
+    """Dataset which converts Nifti-Files to 2D or 3D Numpy-Arrays
+        
+    Parameters:
+    ----------
+    img_dir:  Directory where the image nifti files are stored
+    pat_dir:  each patient needs its own directory or not
+    mask_dir: Directory where the mask nifti files are stored
+              each patient needs its own directory (same name as in img_dir)
+    new_shape: shape which the images will be cropped/padded
+    get_slices: tells, if output should be bitmap (True) or voxelmap(False)
+    sizing: tells, if output should be giving back with each pixel sized to 1mm or not
+
+    
+    Returns:
+    ----------
+    np array tuple of image and mask
+
+    """
+    files = []
+    images = []
+    masks = []
+
+    def __init__(
+        self,
+        img_dir: str,
+        mask_dir: str,
+        pat_dir: bool,
+        new_shape: Tuple = (160, 160),
+        get_slices: bool = True,
+        sizing: bool = True):
+
+        self.img_dir = Path(img_dir)
+        self.mask_dir = Path(mask_dir)
+        self.new_shape = new_shape
+        self.sizing = sizing
+        self.pat_dir = pat_dir
+        
+        if(self.pat_dir):
+          for f in self.img_dir.iterdir():
+            if f.is_dir():
+              for n in f.iterdir():
+                if not n.is_dir():
+                  file_name, file_extension = os.path.splitext(n)
+
+                  if (file_extension == ".gz" or file_extension == ".nii"):
+                    mask_dir_file = os.path.join(self.mask_dir, os.path.basename(f) )+ "/"
+
+                    for mask in Path(mask_dir_file).iterdir():
+                      mask_name, mask_extension = os.path.splitext(mask)
+                      if (mask_extension == ".gz" or mask_extension == ".nii"):
+                        self.files.append(self.combine_files(n, mask))
+        else:
+          f = self.img_dir
+          for n in f.iterdir():
+            if not n.is_dir():
+              file_name, file_extension = os.path.splitext(n)
+
+              if (file_extension == ".gz" or file_extension == ".nii"):
+                mask_dir_file = self.mask_dir
+
+                for mask in Path(mask_dir_file).iterdir():
+                  mask_name, mask_extension = os.path.splitext(mask)
+                  if (mask_extension == ".gz" or mask_extension == ".nii"):
+                    self.files.append(self.combine_files(n, mask))
+
+        len_files = len(self.files)
+        for i in range(len_files):
+          try:
+            file = self.files[i]
+          except:
+            break
+          img = nib.load(file['image'])
+          mask = nib.load(file['mask'])
+
+          img_canon = nib.as_closest_canonical(img)
+          mask_canon = nib.as_closest_canonical(mask)
+
+          if(self.sizing):
+            res_img = resample_nib(img_canon)
+            res_mask = resample_mask_to(mask_canon, res_img)
+          else:
+            res_img = img_canon
+            res_mask = mask_canon
+
+          pad_img = pad_and_crop(res_img, self.new_shape, -1024)
+          pad_mask = pad_and_crop(res_mask, self.new_shape, 0)
+
+          new_orientation = ('I', 'P', 'R')
+
+          reo_img = reorient_to(pad_img, new_orientation)
+          reo_mask = reorient_to(pad_mask, new_orientation)
+
+          voxel_array_img = np.array(reo_img.get_fdata())
+          voxel_array_mask = np.array(reo_mask.get_fdata())
+
+          if get_slices:
+            for pixel_array in voxel_array_img:
+              self.images.append(pixel_array)
+
+            for pixel_array in voxel_array_mask:
+              self.masks.append(pixel_array)
+          else:
+            self.images.append(voxel_array_img)
+            self.masks.append(voxel_array_mask)
+    
+    def combine_files(self, image, mask,): 
+        return {
+            'image': image, 
+            'mask': mask,
+        }
+
+    def __len__(self):
+        img_len = len(self.images)
+
+        return img_len
+
+
+    def __getitem__(self, idx):
+        return self.images[idx], self.masks[idx]
+
+    def __repr__(self):
+        s = f'Dataset class with {self.__len__()} images, padded to {self.new_shape}'
+
+        return s
