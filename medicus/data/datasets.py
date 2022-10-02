@@ -63,8 +63,8 @@ class SharedTransformImageDataset:
         sample = self.samples_list[index]
         target = self.targets_list[index]
 
-        sample = Image.open(sample).convert("L")
-        target = Image.open(target).convert("L")
+        sample = Image.open(sample)
+        target = Image.open(target)
 
         if self.share_seed():
             seed = np.random.randint(2147483647)
@@ -81,7 +81,8 @@ class SharedTransformImageDataset:
         
         if self.return_untransformed_sample:
             return input, sample, target
-        return input, target
+        return input/65535, target/65535
+        #TODO: change division to transform
 
 class NiftiImageDataset:
     """Dataset which converts Nifti-Files to 2D or 3D Numpy-Arrays
@@ -128,12 +129,12 @@ class NiftiImageDataset:
                 if not n.is_dir():
                   file_name, file_extension = os.path.splitext(n)
 
-                  if (file_extension == ".gz"):
+                  if (file_extension == ".gz" or file_extension == ".nii"):
                     mask_dir_file = os.path.join(self.mask_dir, os.path.basename(f) )+ "/"
 
                     for mask in Path(mask_dir_file).iterdir():
                       mask_name, mask_extension = os.path.splitext(mask)
-                      if (mask_extension == ".gz"):
+                      if (mask_extension == ".gz" or mask_extension == ".nii"):
                         self.files.append(self.combine_files(n, mask))
         else:
           f = self.img_dir
@@ -141,12 +142,12 @@ class NiftiImageDataset:
             if not n.is_dir():
               file_name, file_extension = os.path.splitext(n)
 
-              if (file_extension == ".gz"):
+              if (file_extension == ".gz" or file_extension == ".nii"):
                 mask_dir_file = self.mask_dir
 
                 for mask in Path(mask_dir_file).iterdir():
                   mask_name, mask_extension = os.path.splitext(mask)
-                  if (mask_extension == ".gz"):
+                  if (mask_extension == ".gz" or mask_extension == ".nii"):
                     self.files.append(self.combine_files(n, mask))
 
         len_files = len(self.files)

@@ -88,7 +88,7 @@ def shared_transform(
 
 
 sample_transform = T.Compose([
-    #Normalize(),
+    #
 ])
 
 target_transform = T.Compose([
