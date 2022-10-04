@@ -21,6 +21,7 @@ from torchmetrics import MeanMetric
 from torch.optim import lr_scheduler
 from torch.utils.data import DataLoader
 from torchsummary import summary
+from colour import Color
 
 import torchvision.transforms.functional as F
 
