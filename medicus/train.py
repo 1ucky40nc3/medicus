@@ -3,6 +3,7 @@ from typing import Dict
 from typing import Tuple
 from typing import Callable
 from typing import Optional
+from typing import List
 
 import os
 import sys
@@ -326,7 +327,11 @@ def parse(config) -> dict:
         "save_dir": config["save_dir"],
         "log_every": config["log_every"],
         "eval_every": config["eval_every"],
-        "save_every": config["save_every"]
+        "save_every": config["save_every"],
+        "methods": config["methods"],
+        "project": config["project"],
+        "notes": config["notes"],
+        "tags": config["tags"],
     }
 
 def masks_to_colorimg(masks):
