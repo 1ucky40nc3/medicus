@@ -36,6 +36,8 @@ import copy
 
 from collections import defaultdict
 
+import wandb
+
 Device = Any
 LRScheduler = Any
 
@@ -269,7 +271,7 @@ def timestamp() -> str:
     )
 
 def evaluate(
-    model,
+    model: nn.Module,
     dataloader: DataLoader,
     loss_fn: Callable,
     device: Device,
@@ -297,7 +299,7 @@ def evaluate(
     return metric.compute()
 
 def inference(
-    model,
+    model: nn.Module,
     samples: torch.Tensor,
     device: Device
 ) -> Tuple[torch.Tensor]:
@@ -310,16 +312,16 @@ def inference(
 def parse(config) -> dict:
     return {
         "model": {
-            "name": "Test",#config["model"].__name__
+            "name": config["model"].__name__,
             "config": config["model_config"]
         },
         "loss_fn": config["loss_fn"].__name__,
         "optimizer": {
-            "name": "Test", #config["optimizer"].__name__,
+            "name": config["optimizer"].__name__,
             "config": config["optimizer_config"]
         },
         "lr_scheduler": {
-            "name": "Test",#config["lr_scheduler"].__name__,
+            "name": config["lr_scheduler"].__name__,
             "config": config["lr_scheduler_config"]
         },
         "num_epochs": config["num_epochs"],
@@ -331,7 +333,7 @@ def parse(config) -> dict:
         "methods": config["methods"],
         "project": config["project"],
         "notes": config["notes"],
-        "tags": config["tags"],
+        "tags": config["tags"]
     }
 
 def masks_to_colorimg(masks):
@@ -361,16 +363,32 @@ def masks_to_colorimg(masks):
     return colorimg.astype(np.uint8)
   
 
-def masks2imgs(masks: torch.Tensor) -> torch.Tensor:
+def masks2imgs(masks):
     masks = masks.cpu().numpy()
+    batch, channels, height, width = masks.shape
 
-    imgs = []
-    for mask in masks:
-        img = masks_to_colorimg(mask)
-        img = F.to_tensor(img)
-        imgs.append(img)
-    
-    return torch.stack(imgs)
+    red, blue = Color("red"), Color("blue")
+    colors = list(red.range_to(blue, channels))
+    colors = np.array([c.rgb for c in colors]) * 255
+
+    imgs = np.ones(
+        (batch, height, width, 3), 
+        dtype=np.float32
+    ) * 255
+
+    for i in range(batch):
+        for y in range(height):
+            for x in range(width):
+                selected_colors = colors[masks[i, :, y, x] > 0.5]
+
+                if len(selected_colors) > 0:
+                    imgs[i, y, x, :] = np.mean(selected_colors, axis=0)
+
+    imgs = imgs.transpose((0, 3, 1, 2))
+    imgs = torch.from_numpy(imgs).contiguous()
+    imgs = imgs.float().div(255)
+
+    return imgs
 
 class Logger:
     """A Logger class.
