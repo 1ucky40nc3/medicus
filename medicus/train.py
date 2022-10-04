@@ -3,6 +3,7 @@ from typing import Dict
 from typing import Tuple
 from typing import Callable
 from typing import Optional
+from typing import List
 
 import os
 import sys
@@ -20,6 +21,7 @@ from torchmetrics import MeanMetric
 from torch.optim import lr_scheduler
 from torch.utils.data import DataLoader
 from torchsummary import summary
+from colour import Color
 
 import torchvision.transforms.functional as F
 
@@ -34,6 +36,8 @@ import time
 import copy
 
 from collections import defaultdict
+
+import wandb
 
 Device = Any
 LRScheduler = Any
@@ -69,122 +73,13 @@ def print_metrics(metrics, epoch_samples, phase):
         
     print("{}: {}".format(phase, ", ".join(outputs)))    
 
-def train_model(
-    model,
-    optimizer,
-    scheduler,
-    dataloader,
-    device,
-    writer,
-    num_epochs = 25,
-    save_model = False,
-    save_path = "",
-    load_model = False,
-    load_path = ""):
-
-
-    
-    """
-    writer.add_scalar("Loss", total_loss, epoch)
-    writer.add_scalar("Correct", total_correct, epoch)
-    writer.add_scalar("Accuracy", total_correct/ len(train_set), epoch)
-    writer.add_hparams(
-            {"lr": lr, "bsize": batch_size, "shuffle":shuffle},
-            {
-                "accuracy": total_correct/ len(train_set),
-                "loss": total_loss,
-            },
-        )
-
-    TODO: Add train and test writer??"""
-
-    if(load_model):
-        model = torch.jit.load(load_path)
-
-    best_model_wts = copy.deepcopy(model.state_dict())
-    best_loss = 1e10
-
-    for epoch in range(num_epochs):
-        print('Epoch {}/{}'.format(epoch, num_epochs - 1))
-        print('-' * 10)
-        
-        since = time.time()
-
-        # Each epoch has a training and validation phase
-        for phase in ['train','val']:
-            if phase == 'train':
-                scheduler.step()
-                for param_group in optimizer.param_groups:
-                    print("LR", param_group['lr'])
-                    
-                model.train()  # Set model to training mode
-            else:
-                model.eval()   # Set model to evaluate mode
-
-            metrics = defaultdict(float)
-            epoch_samples = 0
-            
-            for inputs, labels in dataloader[phase]:
-                inputs = inputs.to(device)
-                labels = labels.to(device)             
-
-                # zero the parameter gradients
-                optimizer.zero_grad()
-
-                # forward
-                # track history if only in train
-                with torch.set_grad_enabled(phase == 'train'):
-                    outputs = model(inputs)
-                    loss = calc_loss(outputs, labels, metrics)
-                    writer.add_scalar("Loss/train", loss, epoch)
-
-                    # backward + optimize only if in training phase
-                    if phase == 'train':
-                        loss.backward()
-                        optimizer.step()
-
-                # statistics
-                epoch_samples += inputs.size(0)
-
-            print_metrics(metrics, epoch_samples, phase)
-            epoch_loss = metrics['loss'] / epoch_samples
-
-            # deep copy the model
-            if phase == 'val' and epoch_loss < best_loss:
-                print("saving best model")
-                best_loss = epoch_loss
-                best_model_wts = copy.deepcopy(model.state_dict())
-                writer.add_scalar("Loss/val", best_loss, epoch)
-                writer.add_scalar("Dice/val", metrics['dice'], epoch)
-                outputs_grid = torchvision.utils.make_grid(outputs)
-                inputs_grid = torchvision.utils.make_grid(inputs)
-                labels_grid = torchvision.utils.make_grid(labels)
-                writer.add_image("prediction", outputs_grid)
-                writer.add_image("images", inputs_grid)
-                writer.add_image("truth", labels_grid)
-
-                if(save_model):
-                  model_scripted = torch.jit.script(model) # Export to TorchScript
-                  model_scripted.save(save_path) 
-
-        time_elapsed = time.time() - since
-        print('{:.0f}m {:.0f}s'.format(time_elapsed // 60, time_elapsed % 60))
-    print('Best val loss: {:4f}'.format(best_loss))
-
-    # load best model weights
-    model.load_state_dict(best_model_wts)
-    return model
-
-
-
 def train(
-    model,
+    model: nn.Module,
     loss_fn: Callable,
     optimizer: optim.Optimizer,
     lr_scheduler: LRScheduler,
     train_dataloader: DataLoader,
     eval_dataloader: DataLoader,
-    add_dice: bool = False,
     num_epochs: int = 20,
     model_config: Dict[str, Any] = {},
     optimizer_config: Dict[str, Any] = {},
@@ -196,8 +91,11 @@ def train(
     log_every: int = 50,
     eval_every: int = 4_000,
     save_every: int = 20_000,
+    methods: Tuple[str] = ("tensorboard",),
+    project: Optional[str] = None,
+    notes: Optional[str] = None,
+    tags: Optional[List[str]] = None
 ) -> None:
-
     run_id = timestamp()
     log_dir = log_dir.format(run_id)
     save_dir = save_dir.format(run_id)
@@ -216,18 +114,17 @@ def train(
     with open(config_path, "w") as file:
         json.dump(config, file)
 
-    writer = tensorboard.SummaryWriter(log_dir=log_dir)
+    writer = Logger(**config)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    #model = model(**model_config)
+    model = model(**model_config)
     model = model.to(device)
 
     sample, _ = next(iter(train_dataloader))
     summary(model, input_size=sample.shape[1:])
 
-    #optimizer = optimizer(model.parameters(), **optimizer_config)
-    #lr_scheduler = lr_scheduler(optimizer, **lr_scheduler_config)
-    #TODO: a lot
+    optimizer = optimizer(model.parameters(), **optimizer_config)
+    lr_scheduler = lr_scheduler(optimizer, **lr_scheduler_config)
 
     resume_epoch = 0
     resume_step = 0
@@ -256,15 +153,8 @@ def train(
         print(f"    Resumed step in epoch: {resume_step}")
         print(f"    Resumed global step:   {global_step}")
 
-    writer.add_images(
-        f"Images/eval_img_samples",
-        img_tensor=test_samples,
-        global_step=global_step)
-    
-    writer.add_images(
-        f"Images/eval_img_targets",
-        img_tensor=test_targets,
-        global_step=global_step)
+    writer.images("Images/test_samples", test_samples, global_step)
+    writer.images("Images/test_targets", masks2imgs(test_targets), global_step)
 
     for i in range(resume_epoch, num_epochs):
         desc = f"Training...[{i + 1}/{num_epochs}]"
@@ -304,21 +194,17 @@ def train(
                     mean_loss = metric.compute()
                     metric = MeanMetric()
 
-                    iterator.set_postfix(
-                        mean_loss = mean_loss.item())
-                    writer.add_scalar(
-                        "Loss/train_mean_log_step",
-                        scalar_value = mean_loss, 
-                        global_step = global_step)
+                    iterator.set_postfix(mean_loss=mean_loss.item())
+                    writer.scalar("Loss/train", mean_loss, global_step)
                 
                 if global_step % eval_every == 0:
                     outputs = inference(
                         model, test_samples, device=device)
 
-                    writer.add_images(
-                        f"Images/eval_img_outputs",
-                        img_tensor=outputs,
-                        global_step=global_step)
+                    writer.images(
+                        "Images/test_outputs", 
+                        masks2imgs(outputs),
+                        global_step)
 
                     eval_mean_loss = evaluate(
                         model, 
@@ -329,24 +215,10 @@ def train(
                     
                     iterator.set_postfix(
                         eval_mean_loss=eval_mean_loss.item())
-
-                    writer.add_scalar(
+                    writer.scalar(
                         "Loss/eval_mean",
                         eval_mean_loss,
-                        global_step=global_step)
-
-                    if(add_dice):
-                        eval_mean_dice = evaluate_dice_loss(
-                        model, 
-                        eval_dataloader, 
-                        dice_loss, 
-                        device=device,
-                        tqdm_config=tqdm_config)
-                            
-                        writer.add_scalar(
-                            "Dice/val",
-                            eval_mean_dice,
-                            global_step = global_step)
+                        global_step)
                     
                 if global_step % save_every == 0:
                     torch.save({
@@ -358,10 +230,7 @@ def train(
                         "step": j,
                         "test_samples": test_samples,
                         "test_targets": test_targets
-                    }, f"{save_dir}/ckpt_{global_step}.pth")
-
-                    torch.save(model, f"{save_dir}/model_{global_step}.pth")
-
+                    }, f"{save_dir}/ckpt_{global_step}")
 
 def evaluate_dice_loss(
     model,
@@ -403,7 +272,7 @@ def timestamp() -> str:
     )
 
 def evaluate(
-    model,
+    model: nn.Module,
     dataloader: DataLoader,
     loss_fn: Callable,
     device: Device,
@@ -431,7 +300,7 @@ def evaluate(
     return metric.compute()
 
 def inference(
-    model,
+    model: nn.Module,
     samples: torch.Tensor,
     device: Device
 ) -> Tuple[torch.Tensor]:
@@ -444,16 +313,16 @@ def inference(
 def parse(config) -> dict:
     return {
         "model": {
-            "name": "Test",#config["model"].__name__
+            "name": config["model"].__name__,
             "config": config["model_config"]
         },
         "loss_fn": config["loss_fn"].__name__,
         "optimizer": {
-            "name": "Test", #config["optimizer"].__name__,
+            "name": config["optimizer"].__name__,
             "config": config["optimizer_config"]
         },
         "lr_scheduler": {
-            "name": "Test",#config["lr_scheduler"].__name__,
+            "name": config["lr_scheduler"].__name__,
             "config": config["lr_scheduler_config"]
         },
         "num_epochs": config["num_epochs"],
@@ -461,7 +330,11 @@ def parse(config) -> dict:
         "save_dir": config["save_dir"],
         "log_every": config["log_every"],
         "eval_every": config["eval_every"],
-        "save_every": config["save_every"]
+        "save_every": config["save_every"],
+        "methods": config["methods"],
+        "project": config["project"],
+        "notes": config["notes"],
+        "tags": config["tags"]
     }
 
 def masks_to_colorimg(masks):
@@ -491,13 +364,136 @@ def masks_to_colorimg(masks):
     return colorimg.astype(np.uint8)
   
 
-def masks2imgs(masks: torch.Tensor) -> torch.Tensor:
+def masks2imgs(masks):
     masks = masks.cpu().numpy()
+    batch, channels, height, width = masks.shape
 
-    imgs = []
-    for mask in masks:
-        img = masks_to_colorimg(mask)
-        img = F.to_tensor(img)
-        imgs.append(img)
-    
-    return torch.stack(imgs)
+    red, blue = Color("red"), Color("blue")
+    colors = list(red.range_to(blue, channels))
+    colors = np.array([c.rgb for c in colors]) * 255
+
+    imgs = np.ones(
+        (batch, height, width, 3), 
+        dtype=np.float32
+    ) * 255
+
+    for i in range(batch):
+        for y in range(height):
+            for x in range(width):
+                selected_colors = colors[masks[i, :, y, x] > 0.5]
+
+                if len(selected_colors) > 0:
+                    imgs[i, y, x, :] = np.mean(selected_colors, axis=0)
+
+    imgs = imgs.transpose((0, 3, 1, 2))
+    imgs = torch.from_numpy(imgs).contiguous()
+    imgs = imgs.float().div(255)
+
+    return imgs
+
+class Logger:
+    """A Logger class.
+
+    Log scalars and images with Tensorboard or Weights & Biases.
+    This makes the use of multiple methods very easy. Simply supply
+    a list of the types of summary writer to log with.
+
+    Attrs:
+        types (list[str]): The types of summary writers to log to.
+                           Possible values are ('tensorboard', 'w&b').
+        log_dir (str): The directory to write log files to.
+        project (optional, str): The project name to log to. (Needed for 'w&b')
+        config (optional, str): A runs config. (Needed for 'w&b')
+    """
+    logger_methods: Tuple[str] = ("tensorboard", "w&b")
+
+    def __init__(
+        self,
+        methods: Tuple[str],
+        log_dir: str,
+        project: Optional[str] = None,
+        config: Optional[dict] = None,
+        **kwargs
+    ) -> None:
+        assert all(t in self.logger_methods for t in methods), (
+            "Error: A wrong item in `logger_methods` was supplied! " + 
+            f"All possible logger types are: {self.logger_methods}")
+        
+        self.methods = set(methods)
+        self.log_dir = log_dir
+        self.project = project
+        self.config = config
+
+        for method in self.methods:
+            attrs = {
+                **kwargs,
+                "log_dir": log_dir, 
+                "project": project, 
+                "config": config,
+            }
+            self.map("init", method, attrs)
+
+    def init_tb(self, log_dir: str, **kwargs) -> None:
+        self.tb_writer = tensorboard.SummaryWriter(log_dir=log_dir)
+
+    def init_wb(self, project: str, config: str, **kwargs) -> None:
+        assert project is not None, "Error: Weights & Biases logging shall be used, but no `project` is supplied!"
+        assert config is not None, "Error: Weights & Biases logging shall be used, but no `config` is supplied!"
+
+        wandb.init(project=project, config=config)
+
+    def scalar_tb(self, name: str, value: float, step: int) -> None:
+        self.tb_writer.add_scalar(name, value, step)
+
+    def scalar_wb(self, name: str, value: float, step: int) -> None:
+        wandb.log({name: value}, step=step)
+
+    def images_tb(self, name: str, images: torch.Tensor, step: int) -> None:
+        self.tb_writer.add_images(name, images, step)
+
+    def images_wb(self, name: str, images: torch.Tensor, step: int) -> None:
+        table = wandb.Table(columns=['ID', 'Image'])
+
+        for id, img in zip(range(len(images)), images):
+            img = F.to_pil_image(img)
+            img = wandb.Image(img)
+            table.add_data(id, img)
+
+        wandb.log({name: table}, step=step)
+
+    def map(self, action: str, method: str, attrs: dict) -> None:
+        mapping = {
+            "init": {
+                "tensorboard": self.init_tb,
+                "w&b": self.init_wb
+            },
+            "scalar": {
+                "tensorboard": self.scalar_tb,
+                "w&b": self.scalar_wb
+            },
+            "images": {
+                "tensorboard": self.images_tb,
+                "w&b": self.images_wb
+            }
+        }
+
+        func = mapping[action][method]
+        func(**attrs)
+
+    def scalar(self, name: str, value: float, step: int) -> None:
+        for method in self.methods:
+            attrs = {
+                "name": name, 
+                "value": value, 
+                "step": step
+            }
+            self.map("scalar", method, attrs)
+
+    def images(self, name: str, images: torch.Tensor, step: int) -> None:
+        for method in self.methods:
+            attrs = {
+                "name": name, 
+                "images": images, 
+                "step": step
+            }
+            self.map("images", method, attrs)
