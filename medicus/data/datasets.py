@@ -232,6 +232,147 @@ class SharedTransformNumpyDataset(SharedTransformDataset):
         return np.load(path)
 
 class NiftiImageDataset:
+    """The NiftiImageDataset class.
+
+    This describes a dataset that loads nifti-files from sample and target
+    directories, resamples, reorientes and normalizes samples and targets
+    and later returns the data points as numpy arrays.
+
+    Note: 
+
+    Attrs:
+        sample_dir (str): The directory of the sample files.
+        target_dir (str): The directory if the target files.
+        pat_dir (bool):   States if files are in a seperate directory.
+        reshape (bool):   States if images should get a new shape through padding and cropping.
+        new_shape (Tuple):  States the new shape of the images.
+        get_slices (Tuple): States if 2d numpy arrays should be returned.
+                            If this is deactivated 3d numpy arrays will be returned.
+        sizing (bool):      States if the images should be resampled for 1mm each pixel.
+        automatic_padding_value (bool): States if the value for padding should be determined automatically.
+        padding_value (int):    States the value for padding areas.
+        reorientation: (Tuple): States how the images should be reorienated.
+        normalize(bool):        States if the image values should be normalized between 0 and 1.
+
+    """
+    images = []
+    masks = []
+
+    def __init__(
+        self,
+        img_dir: str,
+        mask_dir: str,
+        pat_dir: bool,
+        reshape: bool,
+        new_shape: Tuple = (160, 160),
+        get_slices: bool = True,
+        sizing: bool = True,
+        automatic_padding_value: bool = True,
+        padding_value: int = 0,
+        reorientation: Tuple(str, str, str) = ('I', 'P', 'R'),
+        normalize: bool = True,
+        ):
+
+        self.img_dir = Path(img_dir)
+        self.mask_dir = Path(mask_dir)
+        self.new_shape = new_shape
+        self.sizing = sizing
+        self.pat_dir = pat_dir
+        self.automatic_padding_value = automatic_padding_value
+        self.padding_value = padding_value
+        self.reorientation = reorientation
+        self.normalize = normalize
+        self.reshape = reshape
+        
+        if(pat_dir):
+          samples_list, targets_list = list_dir_dataset_files(
+              sample_dir = self.img_dir, target_dir = self.mask_dir, sample_format = ".gz")
+          samples_list_nii, targets_list_nii = list_dir_dataset_files(
+              sample_dir = self.img_dir, target_dir = self.mask_dir, sample_format = ".nii")
+        else:
+          samples_list, targets_list = list_dataset_files(
+              sample_dir = self.img_dir, target_dir = self.mask_dir, sample_format = ".gz")
+          samples_list_nii, targets_list_nii = list_dataset_files(
+              sample_dir = self.img_dir, target_dir = self.mask_dir, sample_format = ".nii")
+
+        samples_list.extend(samples_list_nii)
+        targets_list.extend(targets_list_nii)
+
+        for image_file, mask_file in zip(samples_list, targets_list):
+          img = nib.load(image_file)
+          mask = nib.load(mask_file)
+
+          img_canon = nib.as_closest_canonical(img)
+          mask_canon = nib.as_closest_canonical(mask)
+
+          if(self.sizing):
+            res_img = resample_nib(img_canon)
+            res_mask = resample_mask_to(mask_canon, res_img)
+          else:
+            res_img = img_canon
+            res_mask = mask_canon
+
+          reo_img = reorient_to(img_canon, self.reorientation)
+          reo_mask = reorient_to(mask_canon, self.reorientation)
+
+
+          min_value = np.amin(np.array(reo_img.get_fdata()))
+          max_value = np.amax(np.array(reo_img.get_fdata()))
+
+          if (self.automatic_padding_value):
+            self.padding_value = min_value
+
+          if(self.reshape):
+            pad_img = pad_and_crop(reo_img, self.new_shape, self.padding_value)
+            pad_mask = pad_and_crop(reo_mask, self.new_shape, 0)
+          else:
+            pad_img = reo_img
+            pad_mask = reo_mask
+
+          voxel_array_img = np.array(pad_img.get_fdata())
+          voxel_array_mask = np.array(reo_mask.get_fdata())
+
+          if(normalize):
+            voxel_array_img = (voxel_array_img - min_value)/(max_value-min_value)
+            voxel_array_mask = voxel_array_mask/np.amax(voxel_array_mask)
+
+          if get_slices:
+            for pixel_array in voxel_array_img:
+              self.images.append(pixel_array)
+
+            for pixel_array in voxel_array_mask:
+              self.masks.append(pixel_array)
+          else:
+            self.images.append(voxel_array_img)
+            self.masks.append(voxel_array_mask)
+    
+    def combine_files(self, image, mask,): 
+        return {
+            'image': image, 
+            'mask': mask,
+        }
+
+    def __len__(self):
+        img_len = len(self.images)
+        return img_len
+
+    def __getitem__(self, idx):
+        return self.images[idx], self.masks[idx]
+
+    def __repr__(self):
+        s = f'Dataset class with {self.__len__()} images, '
+
+        if self.normalize:
+          s = s + f"normalized, "
+
+        if self.sizing:
+          s = s + f"padded to {self.new_shape}, "
+
+        s = s + f"reorientated to {self.reorientation}."
+          
+        return s
+
+class NiftiImageDataset_old:
     """Dataset which converts Nifti-Files to 2D or 3D Numpy-Arrays
         
     Parameters:
