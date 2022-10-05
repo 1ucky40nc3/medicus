@@ -252,6 +252,8 @@ class NiftiImageDataset:
     files = []
     images = []
     masks = []
+    min_value = 0
+    max_value = 1
 
     def __init__(
         self,
@@ -260,7 +262,8 @@ class NiftiImageDataset:
         pat_dir: bool,
         new_shape: Tuple = (160, 160),
         get_slices: bool = True,
-        sizing: bool = True):
+        sizing: bool = True,
+        padding_value: int = 0):
 
         self.img_dir = Path(img_dir)
         self.mask_dir = Path(mask_dir)
@@ -315,7 +318,7 @@ class NiftiImageDataset:
             res_img = img_canon
             res_mask = mask_canon
 
-          pad_img = pad_and_crop(res_img, self.new_shape, -1024)
+          pad_img = pad_and_crop(res_img, self.new_shape, padding_value)
           pad_mask = pad_and_crop(res_mask, self.new_shape, 0)
 
           new_orientation = ('I', 'P', 'R')
@@ -324,6 +327,9 @@ class NiftiImageDataset:
           reo_mask = reorient_to(pad_mask, new_orientation)
 
           voxel_array_img = np.array(reo_img.get_fdata())
+          self.min_value = np.amin(voxel_array_img)
+          self.max_value = np.amax(voxel_array_img)
+          print("values:", self.min_value, self.max_value)
           voxel_array_mask = np.array(reo_mask.get_fdata())
 
           if get_slices:
