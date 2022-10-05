@@ -252,8 +252,7 @@ class NiftiImageDataset:
         normalize(bool):        States if the image values should be normalized between 0 and 1.
 
     """
-
-
+    
     def __init__(
         self,
         img_dir: str,
@@ -269,6 +268,7 @@ class NiftiImageDataset:
         normalize: bool = True,
         format: str = "gz"
     ) -> None:
+    
         self.img_dir = Path(img_dir)
         self.mask_dir = Path(mask_dir)
         self.new_shape = new_shape
@@ -285,6 +285,7 @@ class NiftiImageDataset:
                 sample_dir=self.img_dir, 
                 target_dir=self.mask_dir, 
                 sample_format=f".{format}")
+
         else:
             samples_list, targets_list = list_dataset_files(
                 sample_dir=self.img_dir, 
@@ -328,16 +329,9 @@ class NiftiImageDataset:
 
                 for slice in target:
                     self.targets.append(slice)
-                    
             else:
                 self.samples.append(sample)
                 self.targets.append(target)
-    
-    def combine_files(self, image, mask,): 
-        return {
-            'image': image, 
-            'mask': mask,
-        }
 
     def __len__(self):
         img_len = len(self.samples)
@@ -356,7 +350,6 @@ class NiftiImageDataset:
           s = s + f"padded to {self.new_shape}, "
 
         s = s + f"reorientated to {self.reorientation}."
-          
         return s
 
 class NiftiImageDataset_old:
