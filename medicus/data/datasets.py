@@ -3,27 +3,24 @@ from typing import Optional
 from typing import Callable
 from typing import Any
 
+import os 
 
 from pathlib import Path
 
-
 import numpy as np
+
 import nibabel as nib
 
 from PIL import Image
 
 import torch
 
-
-import torch
-import os 
-
 from medicus.data.utils import list_dataset_files, list_dir_dataset_files, set_seed
 from medicus.data.nib_utils import *
 
+
 def identity(x: Any):
     return x
-
 
 
 class SharedTransformDataset:
@@ -246,7 +243,7 @@ class NiftiImageDataset:
         pat_dir (bool):   States if files are in a seperate directory.
         reshape (bool):   States if images should get a new shape through padding and cropping.
         new_shape (Tuple):  States the new shape of the images.
-        get_slices (Tuple): States if 2d numpy arrays should be returned.
+        return_slices (Tuple): States if 2d numpy arrays should be returned.
                             If this is deactivated 3d numpy arrays will be returned.
         sizing (bool):      States if the images should be resampled for 1mm each pixel.
         automatic_padding_value (bool): States if the value for padding should be determined automatically.
@@ -265,14 +262,14 @@ class NiftiImageDataset:
         pat_dir: bool,
         reshape: bool,
         new_shape: Tuple = (160, 160),
-        get_slices: bool = True,
+        return_slices: bool = True,
         sizing: bool = True,
         automatic_padding_value: bool = True,
         padding_value: int = 0,
         reorientation: Tuple = ('I', 'P', 'R'),
         normalize: bool = True,
-        ):
-
+        format: str = "gz"
+    ) -> None:
         self.img_dir = Path(img_dir)
         self.mask_dir = Path(mask_dir)
         self.new_shape = new_shape
@@ -284,69 +281,55 @@ class NiftiImageDataset:
         self.normalize = normalize
         self.reshape = reshape
         
-        if(pat_dir):
-          samples_list, targets_list = list_dir_dataset_files(
-              sample_dir = self.img_dir, target_dir = self.mask_dir, sample_format = ".gz")
-          """          samples_list_nii, targets_list_nii = list_dir_dataset_files(
-              sample_dir = self.img_dir, target_dir = self.mask_dir, sample_format = ".nii")"""
+        if pat_dir:
+            samples_list, targets_list = list_dir_dataset_files(
+                sample_dir=self.img_dir, 
+                target_dir=self.mask_dir, 
+                sample_format=f".{format}")
         else:
-          samples_list, targets_list = list_dataset_files(
-              sample_dir = self.img_dir, target_dir = self.mask_dir, sample_format = ".gz")
-          """          samples_list_nii, targets_list_nii = list_dataset_files(
-              sample_dir = self.img_dir, target_dir = self.mask_dir, sample_format = ".nii")"""
-
-        #samples_list.extend(samples_list_nii)
-        #targets_list.extend(targets_list_nii)
+            samples_list, targets_list = list_dataset_files(
+                sample_dir=self.img_dir, 
+                target_dir=self.mask_dir, 
+                sample_format=f".{format}")
 
         for image_file, mask_file in zip(samples_list, targets_list):
-          img = nib.load(image_file)
-          mask = nib.load(mask_file)
+            sample = nib.load(image_file)
+            target = nib.load(mask_file)
 
-          img_canon = nib.as_closest_canonical(img)
-          mask_canon = nib.as_closest_canonical(mask)
+            sample = nib.as_closest_canonical(sample)
+            target = nib.as_closest_canonical(target)
 
-          if(self.sizing):
-            res_img = resample_nib(img_canon)
-            res_mask = resample_mask_to(mask_canon, res_img)
-          else:
-            res_img = img_canon
-            res_mask = mask_canon
+            if self.sizing:
+                sample = resample_nib(sample)
+                target = resample_mask_to(target, sample)
 
-          #reo_img = reorient_to(img_canon, self.reorientation)
-          #reo_mask = reorient_to(mask_canon, self.reorientation)
+            self.min_value = np.amin(np.array(sample.get_fdata()))
+            self.max_value = np.amax(np.array(sample.get_fdata()))
 
-          reo_img = res_img
-          reo_mask = res_mask
+            if self.automatic_padding_value:
+                self.padding_value = self.min_value
 
-          self.min_value = np.amin(np.array(reo_img.get_fdata()))
-          self.max_value = np.amax(np.array(reo_img.get_fdata()))
+            if self.reshape:
+                sample = pad_and_crop(sample, self.new_shape, self.padding_value)
+                target = pad_and_crop(target, self.new_shape, 0)
 
-          if (self.automatic_padding_value):
-            self.padding_value = self.min_value
+            sample = np.array(sample.get_fdata())
+            target = np.array(target.get_fdata())
 
-          if(self.reshape):
-            pad_img = pad_and_crop(reo_img, self.new_shape, self.padding_value)
-            pad_mask = pad_and_crop(reo_mask, self.new_shape, 0)
-          else:
-            pad_img = reo_img
-            pad_mask = reo_mask
+            if normalize:
+                sample = (sample - self.min_value) / (self.max_value - self.min_value)
+                target = target / np.amax(target)
 
-          voxel_array_img = np.array(pad_img.get_fdata())
-          voxel_array_mask = np.array(pad_mask.get_fdata())
+            if return_slices:
+                for slice in sample:
+                    self.images.append(slice)
 
-          if(normalize):
-            voxel_array_img = (voxel_array_img - self.min_value)/(self.max_value-self.min_value)
-            voxel_array_mask = voxel_array_mask/np.amax(voxel_array_mask)
-
-          if get_slices:
-            for pixel_array in voxel_array_img:
-              self.images.append(pixel_array)
-
-            for pixel_array in voxel_array_mask:
-              self.masks.append(pixel_array)
-          else:
-            self.images.append(voxel_array_img)
-            self.masks.append(voxel_array_mask)
+                for slice in target:
+                    self.masks.append(slice)
+                    
+            else:
+                self.images.append(sample)
+                self.masks.append(target)
     
     def combine_files(self, image, mask,): 
         return {
