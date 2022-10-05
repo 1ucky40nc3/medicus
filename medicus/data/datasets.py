@@ -269,7 +269,7 @@ class NiftiImageDataset:
         sizing: bool = True,
         automatic_padding_value: bool = True,
         padding_value: int = 0,
-        reorientation: Tuple(str, str, str) = ('I', 'P', 'R'),
+        reorientation: Tuple = ('I', 'P', 'R'),
         normalize: bool = True,
         ):
 
@@ -287,16 +287,16 @@ class NiftiImageDataset:
         if(pat_dir):
           samples_list, targets_list = list_dir_dataset_files(
               sample_dir = self.img_dir, target_dir = self.mask_dir, sample_format = ".gz")
-          samples_list_nii, targets_list_nii = list_dir_dataset_files(
-              sample_dir = self.img_dir, target_dir = self.mask_dir, sample_format = ".nii")
+          """          samples_list_nii, targets_list_nii = list_dir_dataset_files(
+              sample_dir = self.img_dir, target_dir = self.mask_dir, sample_format = ".nii")"""
         else:
           samples_list, targets_list = list_dataset_files(
               sample_dir = self.img_dir, target_dir = self.mask_dir, sample_format = ".gz")
-          samples_list_nii, targets_list_nii = list_dataset_files(
-              sample_dir = self.img_dir, target_dir = self.mask_dir, sample_format = ".nii")
+          """          samples_list_nii, targets_list_nii = list_dataset_files(
+              sample_dir = self.img_dir, target_dir = self.mask_dir, sample_format = ".nii")"""
 
-        samples_list.extend(samples_list_nii)
-        targets_list.extend(targets_list_nii)
+        #samples_list.extend(samples_list_nii)
+        #targets_list.extend(targets_list_nii)
 
         for image_file, mask_file in zip(samples_list, targets_list):
           img = nib.load(image_file)
@@ -312,15 +312,17 @@ class NiftiImageDataset:
             res_img = img_canon
             res_mask = mask_canon
 
-          reo_img = reorient_to(img_canon, self.reorientation)
-          reo_mask = reorient_to(mask_canon, self.reorientation)
+          #reo_img = reorient_to(img_canon, self.reorientation)
+          #reo_mask = reorient_to(mask_canon, self.reorientation)
 
+          reo_img = res_img
+          reo_mask = res_mask
 
-          min_value = np.amin(np.array(reo_img.get_fdata()))
-          max_value = np.amax(np.array(reo_img.get_fdata()))
+          self.min_value = np.amin(np.array(reo_img.get_fdata()))
+          self.max_value = np.amax(np.array(reo_img.get_fdata()))
 
           if (self.automatic_padding_value):
-            self.padding_value = min_value
+            self.padding_value = self.min_value
 
           if(self.reshape):
             pad_img = pad_and_crop(reo_img, self.new_shape, self.padding_value)
@@ -330,10 +332,10 @@ class NiftiImageDataset:
             pad_mask = reo_mask
 
           voxel_array_img = np.array(pad_img.get_fdata())
-          voxel_array_mask = np.array(reo_mask.get_fdata())
+          voxel_array_mask = np.array(pad_mask.get_fdata())
 
           if(normalize):
-            voxel_array_img = (voxel_array_img - min_value)/(max_value-min_value)
+            voxel_array_img = (voxel_array_img - self.min_value)/(self.max_value-self.min_value)
             voxel_array_mask = voxel_array_mask/np.amax(voxel_array_mask)
 
           if get_slices:
