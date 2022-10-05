@@ -164,6 +164,7 @@ class SharedTransformImageDataset(SharedTransformDataset):
         shared_transform: Optional[Callable] = None,
         share_transform_random_seed: bool = True,
         return_untransformed_sample: bool = True,
+        pat_dir: bool = False,
         sample_format: str = ".png",
         target_format: str = ".png",
         **kwargs

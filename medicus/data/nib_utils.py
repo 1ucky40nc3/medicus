@@ -10,6 +10,7 @@ from matplotlib.colors import ListedColormap, Normalize
 from matplotlib.patches import Circle
 import json
 from medicus.utils.affines import *
+from PIL import Image
 
 # define HU windows
 wdw_sbone = Normalize(vmin=-500, vmax=1300, clip=True)
