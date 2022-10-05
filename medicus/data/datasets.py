@@ -252,8 +252,7 @@ class NiftiImageDataset:
         normalize(bool):        States if the image values should be normalized between 0 and 1.
 
     """
-    images = []
-    masks = []
+
 
     def __init__(
         self,
@@ -291,6 +290,9 @@ class NiftiImageDataset:
                 sample_dir=self.img_dir, 
                 target_dir=self.mask_dir, 
                 sample_format=f".{format}")
+
+        self.images = []
+        self.masks = []
 
         for image_file, mask_file in zip(samples_list, targets_list):
             sample = nib.load(image_file)
