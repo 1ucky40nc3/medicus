@@ -15,13 +15,13 @@ class Normalize(object):
         self,
         return_bool: bool = False,
         max_value: int = 65535,
-        ):
+    ) -> None:
         
         self.max_value = max_value
         self.return_bool = return_bool
 
     def __call__(self, image):
-        image = image/self.max_value
+        image = image / self.max_value
         if(self.return_bool):
             image = (image > 0.1).float()
         return image
@@ -38,59 +38,51 @@ def shared_transform(
     affine: bool = False,
     translation_range: Tuple = (0, 0.5),
     p: int = 0.2,
-    ):
+) -> T.Compose:
+    transforms = [] # TODO: Actually use theese transforms ;)
 
-    transformers = []
-
-    if(affine or rotate):
-        if(rotate):
+    if affine or rotate:
+        if rotate:
             transform_rotation_range = rotate_range
         else:
             transform_rotation_range = 0
 
-        if(affine):
+        if affine:
             transform_affine_range = translation_range
         else:
-            transform_affine_range = (0,0)
+            transform_affine_range = (0, 0)
 
-        transformers.append(
+        transforms.append(
             T.RandomAffine(
                 degrees = transform_rotation_range,
                 translate = transform_affine_range,
             )
         )
 
-    if(crop):
-        transformers.append(
-            T.RandomCrop(crop_size, padding = (crop_size[0]//4, crop_size[1]//4))
+    if crop:
+        transforms.append(
+            T.RandomCrop(
+                crop_size, 
+                padding=(
+                    crop_size[0] // 4, 
+                    crop_size[1] // 4
+                )
+            )
         )
     
-
-    if (center_crop):
+    if center_crop:
         return T.Compose([
-        T.ToTensor(),
-        T.CenterCrop(center_crop_size),
-        T.RandomApply(transformers, p = p)                 
+            T.ToTensor(),
+            T.CenterCrop(center_crop_size),
+            T.RandomApply(transforms, p=p)                 
         ])
             
-
-
-    if(len(transformers) > 0):
-
+    if len(transforms) > 0:
         return T.Compose([
-        T.ToTensor(),
-        T.RandomApply(transformers, p = p)                 
+            T.ToTensor(),
+            T.RandomApply(transforms, p=p)                 
         ])
     else:
         return T.Compose([
-        T.ToTensor(),               
+            T.ToTensor(),               
         ])
-
-
-sample_transform = T.Compose([
-    #
-])
-
-target_transform = T.Compose([
-    #Normalize(return_bool = True),
-])
