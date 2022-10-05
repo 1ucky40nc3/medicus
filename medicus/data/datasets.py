@@ -291,8 +291,8 @@ class NiftiImageDataset:
                 target_dir=self.mask_dir, 
                 sample_format=f".{format}")
 
-        self.images = []
-        self.masks = []
+        self.samples = []
+        self.targets = []
 
         for image_file, mask_file in zip(samples_list, targets_list):
             sample = nib.load(image_file)
@@ -324,14 +324,14 @@ class NiftiImageDataset:
 
             if return_slices:
                 for slice in sample:
-                    self.images.append(slice)
+                    self.samples.append(slice)
 
                 for slice in target:
-                    self.masks.append(slice)
+                    self.targets.append(slice)
                     
             else:
-                self.images.append(sample)
-                self.masks.append(target)
+                self.samples.append(sample)
+                self.targets.append(target)
     
     def combine_files(self, image, mask,): 
         return {
@@ -340,11 +340,11 @@ class NiftiImageDataset:
         }
 
     def __len__(self):
-        img_len = len(self.images)
+        img_len = len(self.samples)
         return img_len
 
     def __getitem__(self, idx):
-        return self.images[idx], self.masks[idx]
+        return self.samples[idx], self.targets[idx]
 
     def __repr__(self):
         s = f'Dataset class with {self.__len__()} images, '
