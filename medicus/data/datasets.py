@@ -248,7 +248,8 @@ class NiftiImageDataset:
         sizing (bool):      States if the images should be resampled for 1mm each pixel.
         automatic_padding_value (bool): States if the value for padding should be determined automatically.
         padding_value (int):    States the value for padding areas.
-        reorientation: (Tuple): States how the images should be reorienated.
+        reoriantaion (bool):    States if the image should be reorientated.
+        orientation: (Tuple):   States how the images should be reorientated.
         normalize(bool):        States if the image values should be normalized between 0 and 1.
 
     """
@@ -264,7 +265,8 @@ class NiftiImageDataset:
         sizing: bool = True,
         automatic_padding_value: bool = True,
         padding_value: int = 0,
-        reorientation: Tuple = ('I', 'P', 'R'),
+        reorientation: bool = True,
+        orientation: Tuple = ('I', 'P', 'R'),
         normalize: bool = True,
         format: str = "gz"
     ) -> None:
@@ -277,6 +279,7 @@ class NiftiImageDataset:
         self.automatic_padding_value = automatic_padding_value
         self.padding_value = padding_value
         self.reorientation = reorientation
+        self.orientation = orientation
         self.normalize = normalize
         self.reshape = reshape
         
@@ -305,6 +308,10 @@ class NiftiImageDataset:
             if self.sizing:
                 sample = resample_nib(sample)
                 target = resample_mask_to(target, sample)
+
+            if self.reorientation:
+                sample = reorient_to(sample, orientation)
+                target = reorient_to(target, orientation)   
 
             self.min_value = np.amin(np.array(sample.get_fdata()))
             self.max_value = np.amax(np.array(sample.get_fdata()))
