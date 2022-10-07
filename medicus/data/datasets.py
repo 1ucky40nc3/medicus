@@ -287,13 +287,17 @@ class NiftiImageDataset:
             samples_list, targets_list = list_dir_dataset_files(
                 sample_dir=self.img_dir, 
                 target_dir=self.mask_dir, 
-                sample_format=f".{format}")
+                sample_format=f".{format}",
+                target_format=f".{format}",
+                allow_different_names = True)
 
         else:
             samples_list, targets_list = list_dataset_files(
                 sample_dir=self.img_dir, 
                 target_dir=self.mask_dir, 
-                sample_format=f".{format}")
+                sample_format=f".{format}",
+                target_format=f".{format}",
+                allow_different_names=True)
 
         self.samples = []
         self.targets = []

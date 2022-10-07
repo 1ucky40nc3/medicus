@@ -28,7 +28,8 @@ def list_dataset_files(
     sample_dir: str, 
     target_dir: str,
     sample_format: str=".*",
-    target_format: str=".*"
+    target_format: str=".*",
+    allow_different_names = False,
 ) -> Tuple[List[str], List[str]]:
     samples_list = glob.glob(f"{sample_dir}/*{sample_format}")
     targets_list = glob.glob(f"{target_dir}/*{target_format}")
@@ -39,7 +40,8 @@ def list_dataset_files(
     assert len(samples_list) > 0, "ERROR: No samples were found!"
     assert len(targets_list) > 0, "ERROR: No targets were found!"
     assert len(samples_list) == len(targets_list), "ERROR: Different number sample and target files!"
-    assert filenames(samples_list) == filenames(targets_list), "ERROR: Sample and target filenames don't match!"
+    if not allow_different_names:
+        assert filenames(samples_list) == filenames(targets_list), "ERROR: Sample and target filenames don't match!"
 
     print(f"SUCCESS: A total of {len(samples_list)} samples were found!")
     return samples_list, targets_list
@@ -49,7 +51,8 @@ def list_dir_dataset_files(
     sample_dir: str, 
     target_dir: str,
     sample_format: str=".png",
-    target_format: str=".png"
+    target_format: str=".png",
+    allow_different_names = False
   ) -> Tuple[List[str], List[str]]:
     sample_dirs = [dir for dir in Path(sample_dir).iterdir()]
     target_dirs = [dir for dir in Path(target_dir).iterdir()]
@@ -68,7 +71,8 @@ def list_dir_dataset_files(
     assert len(samples_list) > 0, "ERROR: No samples were found!"
     assert len(targets_list) > 0, "ERROR: No targets were found!"
     assert len(samples_list) == len(targets_list), "ERROR: Different number sample and target files!"
-    assert filenames(samples_list) == filenames(targets_list), "ERROR: Sample and target filenames don't match!"
+    if not allow_different_names:
+        assert filenames(samples_list) == filenames(targets_list), "ERROR: Sample and target filenames don't match!"
 
     print(f"SUCCESS: A total of {len(samples_list)} samples were found!")
     return samples_list, targets_list
@@ -167,7 +171,7 @@ def save_data_as_png(target_dir, data, start_with = 0, addition = 1024, mult = 6
         img.save(f'{target_dir}/images/file{i + start_with}.png')
         mask.save(f'{target_dir}/masks/file{i + start_with}.png')
 
-def save_voxel_as_png(target_dir, data, addition = 1024, mult = 65535):
+def save_voxel_as_png(target_dir, data, addition = 0, mult = 1):
     for i, (x, y) in enumerate(data):
         img_path = target_dir + f'/images/pat{i}'
         mask_path = target_dir + f'/masks/pat{i}'
@@ -176,11 +180,11 @@ def save_voxel_as_png(target_dir, data, addition = 1024, mult = 65535):
         if not os.path.exists(mask_path): os.makedirs(mask_path)
 
         x = (x + addition)*mult#/4095
-        y = y * mult
+        y = np.where(y>0,255,0)
         for n, (img_slice, mask_slice) in enumerate(zip(x,y)):
           #img_slice = (img_slice + 1024)*65535/4095
-          mask_slice = mask_slice * 4000
-          img = Image.fromarray(img_slice).convert('I')
-          mask = Image.fromarray(mask_slice).convert('I')
+          mask_slice = mask_slice
+          img = Image.fromarray(img_slice).convert("RGB")
+          mask = Image.fromarray(mask_slice).convert("RGB")
           img.save(f'{img_path}/file{n}.png')
           mask.save(f'{mask_path}/file{n}.png')
