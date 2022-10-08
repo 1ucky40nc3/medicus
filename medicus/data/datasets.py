@@ -284,7 +284,7 @@ class NiftiImageDataset:
         self.reshape = reshape
         
         if pat_dir:
-            samples_list, targets_list = list_dir_dataset_files(
+            self.samples_list, self.targets_list = list_dir_dataset_files(
                 sample_dir=self.img_dir, 
                 target_dir=self.mask_dir, 
                 sample_format=f".{format}",
@@ -292,64 +292,52 @@ class NiftiImageDataset:
                 allow_different_names = True)
 
         else:
-            samples_list, targets_list = list_dataset_files(
+            self.samples_list, self.targets_list = list_dataset_files(
                 sample_dir=self.img_dir, 
                 target_dir=self.mask_dir, 
                 sample_format=f".{format}",
                 target_format=f".{format}",
                 allow_different_names=True)
 
-        self.samples = []
-        self.targets = []
-
-        for image_file, mask_file in zip(samples_list, targets_list):
-            sample = nib.load(image_file)
-            target = nib.load(mask_file)
-
-            sample = nib.as_closest_canonical(sample)
-            target = nib.as_closest_canonical(target)
-
-            if self.sizing:
-                sample = resample_nib(sample)
-                target = resample_mask_to(target, sample)
-
-            if self.reorientation:
-                sample = reorient_to(sample, orientation)
-                target = reorient_to(target, orientation)   
-
-            self.min_value = np.amin(np.array(sample.get_fdata()))
-            self.max_value = np.amax(np.array(sample.get_fdata()))
-
-            if self.automatic_padding_value:
-                self.padding_value = self.min_value
-
-            if self.reshape:
-                sample = pad_and_crop(sample, self.new_shape, self.padding_value)
-                target = pad_and_crop(target, self.new_shape, 0)
-
-            sample = np.array(sample.get_fdata())
-            target = np.array(target.get_fdata())
-
-            if normalize:
-                sample = (sample - self.min_value) / (self.max_value - self.min_value)
-                target = target / np.amax(target)
-
-            if return_slices:
-                for slice in sample:
-                    self.samples.append(slice)
-
-                for slice in target:
-                    self.targets.append(slice)
-            else:
-                self.samples.append(sample)
-                self.targets.append(target)
 
     def __len__(self):
-        img_len = len(self.samples)
+        img_len = len(self.samples_list)
         return img_len
 
     def __getitem__(self, idx):
-        return self.samples[idx], self.targets[idx]
+        image_file, mask_file = self.samples_list[idx], self.targets_list[idx]
+        sample = nib.load(image_file)
+        target = nib.load(mask_file)
+
+        sample = nib.as_closest_canonical(sample)
+        target = nib.as_closest_canonical(target)
+
+        if self.sizing:
+            sample = resample_nib(sample)
+            target = resample_mask_to(target, sample)
+
+        if self.reorientation:
+            sample = reorient_to(sample, self.orientation)
+            target = reorient_to(target, self.orientation)   
+
+        self.min_value = np.amin(np.array(sample.get_fdata()))
+        self.max_value = np.amax(np.array(sample.get_fdata()))
+
+        if self.automatic_padding_value:
+            self.padding_value = self.min_value
+
+        if self.reshape:
+            sample = pad_and_crop(sample, self.new_shape, self.padding_value)
+            target = pad_and_crop(target, self.new_shape, 0)
+
+        sample = np.array(sample.get_fdata())
+        target = np.array(target.get_fdata())
+
+        if self.normalize:
+            sample = (sample - self.min_value) / (self.max_value - self.min_value)
+            target = target / np.amax(target)
+
+        return sample, target
 
     def __repr__(self):
         s = f'Dataset class with {self.__len__()} images, '
