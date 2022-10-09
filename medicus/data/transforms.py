@@ -1,5 +1,8 @@
+from random import random
 from typing import Tuple
 from torchvision import transforms as T
+from torchvision.transforms import functional as F
+import torch
 
 #TODO: Take more from Monai
 
@@ -28,61 +31,43 @@ class Normalize(object):
 
 
 def shared_transform(
-    crop: bool = False,
-    crop_size: Tuple = (50,50),
-    center_crop: bool = True,
-    center_crop_size: Tuple = (160,160),
-    input_size: Tuple = (160, 160),
-    rotate: bool = False,
-    rotate_range: Tuple = (-30, 30),
+    random_crop: bool = False,
     affine: bool = False,
-    translation_range: Tuple = (0, 0.5),
-    p: int = 0.2,
+    color_jitter: bool = False,
+    horizontal_flip: bool = False,
+    p: int = 0.3,
 ) -> T.Compose:
-    transforms = [] # TODO: Actually use theese transforms ;)
+    transforms = [T.ToTensor]
 
-    if affine or rotate:
-        if rotate:
-            transform_rotation_range = rotate_range
-        else:
-            transform_rotation_range = 0
-
-        if affine:
-            transform_affine_range = translation_range
-        else:
-            transform_affine_range = (0, 0)
-
+    if affine:
         transforms.append(
             T.RandomAffine(
-                degrees = transform_rotation_range,
-                translate = transform_affine_range,
+                degrees = (-60, 60),
+                translate = (0, 0.8),
             )
         )
 
-    if crop:
+    if color_jitter:
+        bright = torch.rand()
+        contrast = torch.rand() 
         transforms.append(
-            T.RandomCrop(
-                crop_size, 
-                padding=(
-                    crop_size[0] // 4, 
-                    crop_size[1] // 4
-                )
-            )
+            T.ColorJitter(brightness = bright,
+            contrast = contrast)
+        )
+
+    if random_crop:
+        transforms.append(
+            T.RandomCrop(size = (100, 100))
+        )
+
+    if horizontal_flip:
+        transforms.append(
+            T.RandomHorizontalFlip(p = 0.5)
         )
     
-    if center_crop:
-        return T.Compose([
-            T.ToTensor(),
-            T.CenterCrop(center_crop_size),
-            T.RandomApply(transforms, p=p)                 
-        ])
             
-    if len(transforms) > 0:
-        return T.Compose([
-            T.ToTensor(),
-            T.RandomApply(transforms, p=p)                 
-        ])
-    else:
-        return T.Compose([
-            T.ToTensor(),               
-        ])
+
+    return T.Compose([
+        T.ToTensor(),
+        T.RandomApply(transforms, p = p)                 
+    ])
