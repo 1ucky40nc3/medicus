@@ -12,6 +12,8 @@ import torch.nn as nn
 from torch.utils.data import Dataset
 from torch.utils.data import DataLoader
 
+import numpy as np
+
 from PIL import Image
 
 
@@ -38,28 +40,31 @@ def predict_pat(
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    model = model(**model_config)
-
-    state_dict = torch.load(resume_from)
-    model.load_state_dict(state_dict["model"])
     
-    model = model.to(device)
-
-    model.eval()
    
     n = 0
     i = 0
 
-    for x, y in dataloader:
-        x = x.to(device)
-        outputs = model(x)
+    with torch.no_grad():
+        model = model(**model_config)
+
+        state_dict = torch.load(resume_from)
+        model.load_state_dict(state_dict["model"])
+        
+        model = model.to(device)
+
+        model.eval()
+        for x, y in dataloader:
+            x = x.to(device)
+            outputs = model(x)
 
 
-        outputs = outputs.cpu().detach()
-        for pred in outputs:
-            pred =  (pred[0] > 0.5).float().numpy() * 255
-            img = Image.fromarray(pred).convert("RGB")
-            img.save(f'{save_dir}/file{n}.png')
-            n = n + 1
+            outputs = outputs.cpu().detach()
+            for pred in outputs:
+                pred =  (pred[0]).numpy()
+                pred = np.where(pred > 0.5, 255, 0)               
+                img = Image.fromarray(pred).convert("RGB")
+                img.save(f'{save_dir}/file{n}.png')
+                n = n + 1
 
 
