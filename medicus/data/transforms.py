@@ -3,6 +3,7 @@ from typing import Tuple
 from torchvision import transforms as T
 from torchvision.transforms import functional as F
 import torch
+import numpy as np
 
 #TODO: Take more from Monai
 
@@ -31,15 +32,16 @@ class Normalize(object):
 
 
 def shared_transform(
-    random_crop: bool = False,
-    affine: bool = False,
-    color_jitter: bool = False,
-    horizontal_flip: bool = False,
-    p: int = 0.3,
+    random_crop: int = 0,
+    affine: int = 0,
+    horizontal_flip: int = 0,
+    grayscale: int = 0,
 ) -> T.Compose:
     transforms = [T.ToTensor]
 
-    if affine:
+    rand_ints = np.random.rand(4)
+
+    if rand_ints[0] <= affine:
         transforms.append(
             T.RandomAffine(
                 degrees = (-60, 60),
@@ -47,27 +49,51 @@ def shared_transform(
             )
         )
 
-    if color_jitter:
-        bright = torch.rand()
-        contrast = torch.rand() 
+    if rand_ints[1] <= random_crop:
+        transforms.append(
+            T.RandomCrop(size = (100, 100))
+        )
+
+    if rand_ints[2] <= horizontal_flip:
+        transforms.append(
+            T.RandomHorizontalFlip(p = 1)
+        )
+    
+    if rand_ints[3] <= grayscale:
+        transforms.append(
+            T.Grayscale()
+        )
+    
+    transforms.append(T.ToTensor)
+
+    return T.Compose(transforms)
+
+
+def sample_transform(
+    color_jitter: int = 0,
+    blur: int = 0,
+
+    ):
+
+    transforms = []
+
+    rand_ints = np.random.rand(2)
+
+
+    if rand_ints[0] <= color_jitter:
+        bright = np.random.rand()
+        contrast = np.random.rand()
         transforms.append(
             T.ColorJitter(brightness = bright,
             contrast = contrast)
         )
 
-    if random_crop:
+    if rand_ints[1] <= blur:
         transforms.append(
-            T.RandomCrop(size = (100, 100))
+            T.GaussianBlur()
         )
 
-    if horizontal_flip:
-        transforms.append(
-            T.RandomHorizontalFlip(p = 0.5)
-        )
-    
-            
+    return T.Compose(
+        transforms
+    )
 
-    return T.Compose([
-        T.ToTensor(),
-        T.RandomApply(transforms, p = p)                 
-    ])
