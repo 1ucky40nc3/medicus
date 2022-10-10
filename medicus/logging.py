@@ -9,7 +9,7 @@ import torchvision.transforms.functional as F
 import wandb
 
 
-class Logger:
+class Writer:
     """A Logger class.
 
     Log scalars and images with Tensorboard or Weights & Biases.
