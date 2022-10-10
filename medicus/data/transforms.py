@@ -63,8 +63,6 @@ def shared_transform(
         transforms.append(
             T.Grayscale()
         )
-    
-    transforms.append(T.ToTensor)
 
     return T.Compose(transforms)
 
@@ -72,8 +70,7 @@ def shared_transform(
 def sample_transform(
     color_jitter: int = 0,
     blur: int = 0,
-
-    ):
+)-> T.Compose:
 
     transforms = []
 
@@ -90,7 +87,7 @@ def sample_transform(
 
     if rand_ints[1] <= blur:
         transforms.append(
-            T.GaussianBlur()
+            T.GaussianBlur(9)
         )
 
     return T.Compose(
