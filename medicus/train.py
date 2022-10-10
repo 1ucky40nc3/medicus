@@ -1,3 +1,4 @@
+from pickletools import optimize
 from typing import Any
 from typing import Dict
 from typing import Tuple
@@ -10,6 +11,7 @@ import sys
 import math
 import json
 import logging
+import argparse
 
 from tqdm import tqdm
 
@@ -31,6 +33,7 @@ import torch.optim as optim
 import torch.nn.functional as TNF
 
 import torchvision
+import torchvision.transforms as TF
 
 import time
 import copy
@@ -42,8 +45,14 @@ import wandb
 Device = Any
 LRScheduler = Any
 
+import medicus
+
+from medicus.utils import ArgumentParser
+from medicus.configs import default
+
 from .objectives.unet import dice_loss
-from .utils.utils_training import timestamp, parse, inference, evaluate, Logger, masks2imgs
+from .utils import timestamp, parse, inference, evaluate, Writer, masks2imgs
+
 
 def train(
     model: nn.Module,
@@ -74,22 +83,22 @@ def train(
     os.makedirs(log_dir, exist_ok=True)
     os.makedirs(save_dir, exist_ok=True)
 
-    print(f"Starting new run with id: {run_id}")
-    print(f"Saving logs at:           {log_dir}")
-    print(f"Saving checkpoints at:    {save_dir}")
+    logging.info(f"Starting new run with id: {run_id}")
+    logging.info(f"Saving logs at:           {log_dir}")
+    logging.info(f"Saving checkpoints at:    {save_dir}")
 
     config = parse(locals())
-    print("Run with config:")
-    print(json.dumps(config, indent=2))
+    logging.info("Run with config:")
+    logging.info(json.dumps(config, indent=2))
     config_path = f"{log_dir}/config.json"
-    print(f"Saving config at: {config_path}")
+    logging.info(f"Saving config at: {config_path}")
     with open(config_path, "w") as file:
         json.dump(config, file)
 
-    writer = Logger(**config)
+    writer = Writer(**config)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model = model(**model_config)
+    # model = model(**model_config)
     model = model.to(device)
 
     sample, _ = next(iter(train_dataloader))
@@ -119,11 +128,11 @@ def train(
         test_samples = state_dict["test_samples"]
         test_targets = state_dict["test_targets"]
 
-        print(f"Resuming training from checkpoint at {resume_from}")
-        print(f"    Last loss:             {last_loss}")
-        print(f"    Resumed epoch:         {resume_epoch}")
-        print(f"    Resumed step in epoch: {resume_step}")
-        print(f"    Resumed global step:   {global_step}")
+        logging.info(f"Resuming training from checkpoint at {resume_from}")
+        logging.info(f"    Last loss:             {last_loss}")
+        logging.info(f"    Resumed epoch:         {resume_epoch}")
+        logging.info(f"    Resumed step in epoch: {resume_step}")
+        logging.info(f"    Resumed global step:   {global_step}")
 
     writer.images("Images/test_samples", test_samples, global_step)
     writer.images("Images/test_targets", masks2imgs(test_targets), global_step)
@@ -204,4 +213,68 @@ def train(
                         "test_targets": test_targets
                     }, f"{save_dir}/ckpt_{global_step}")
 
+
+def main():
+    parser = medicus.utils.ArgumentParser(
+        medicus.configs.default.argmuents(),
+    )
+    args = parser.parse_args()
+
+    model_cfg = json.load(open(args.model))
+    optim_cfg = json.load(open(args.optim))
+    sched_cfg = json.load(open(args.sched))
+
+    model = getattr(medicus.model, model_cfg["name"])
+    optim = getattr(medicus.optim, optim_cfg["name"])
+    sched = getattr(medicus.sched, sched_cfg["name"])
+
+    loss_fn = getattr(medicus.objectives, args.loss_fn)
+
+    shared_transform = TF.Compose([
+        TF.Lambda(lambda x: torch.from_numpy(x)),
+        TF.Resize((104, 104)),
+    ])
+
+    train_dataset = medicus.data.datasets.SharedTransformNumpyDataset(
+        f"{args.dataset_dir}/{args.dataset_name}/train/samples",
+        f"{args.dataset_dir}/{args.dataset_name}/train/targets",
+        shared_transform=shared_transform,
+        return_untransformed_sample=False
+    )
+    test_dataset = medicus.data.datasets.SharedTransformNumpyDataset(
+        f"{args.dataset_dir}/{args.dataset_name}/eval/samples",
+        f"{args.dataset_dir}/{args.dataset_name}/eval/targets",
+        shared_transform=shared_transform,
+        return_untransformed_sample=False
+    )
+
+    train_dataloader = DataLoader(
+        dataset=train_dataset,
+        batch_size=args.batch_size,
+        shuffle=True
+    )
+    test_dataloader = DataLoader(
+        dataset=test_dataset,
+        batch_size=args.batch_size
+    )
+
+    train(
+        model=model,
+        loss_fn=loss_fn,
+        optimizer=optim,
+        lr_scheduler=sched,
+        train_dataloader=train_dataloader,
+        eval_dataloader=test_dataloader,
+        num_epochs=args.num_epochs,
+        model_config=model_cfg["config"],
+        optimizer_config=optim_cfg["config"],
+        lr_scheduler_config=sched_cfg["config"],
+        eval_every=args.eval_every,
+        save_every=args.save_every,
+        methods=args.logging_methds
+    )
+
+
+if __name__ == "__main__":
+    main()
 
