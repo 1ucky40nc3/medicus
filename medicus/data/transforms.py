@@ -37,8 +37,9 @@ def shared_transform(
     horizontal_flip: int = 0,
     grayscale: int = 0,
 ) -> T.Compose:
-    transforms = [T.ToTensor]
+    transforms = []
 
+    transforms.append(T.ToTensor())
     rand_ints = np.random.rand(4)
 
     if rand_ints[0] <= affine:
