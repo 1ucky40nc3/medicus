@@ -47,8 +47,8 @@ LRScheduler = Any
 
 import medicus
 
-from .objectives.unet import dice_loss
-from .utils import timestamp, parse, inference, evaluate, Writer, masks2imgs
+from .medicus.objectives.unet import dice_loss
+from .medicus.utils import timestamp, parse, inference, evaluate, Writer, masks2imgs
 
 
 def train(
