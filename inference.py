@@ -42,8 +42,8 @@ import wandb
 Device = Any
 LRScheduler = Any
 
-from .objectives.unet import dice_loss
-from .utils import timestamp, parse, inference, evaluate, Writer, masks2imgs
+from .medicus.objectives.unet import dice_loss
+from .medicus.utils import timestamp, parse, inference, evaluate, Writer, masks2imgs
 
 
 def inference(
