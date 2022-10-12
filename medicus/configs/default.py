@@ -120,5 +120,11 @@ def arguments() -> argparse.Namespace:
         type=str,
         help="Directory with checkpoint to resume from."
     )
+    parser.add_argument(
+        "--project",
+        default="medicus",
+        type=str,
+        help="Name of the project for Weights & Biases logging."
+    )
     return parser
 
