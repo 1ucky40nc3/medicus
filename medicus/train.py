@@ -111,7 +111,7 @@ def train(
                 loss = loss_fn(outputs, y)
 
                 if not math.isfinite(loss.item()) or torch.isnan(loss):
-                    logging.error(f"Loss is {loss.item()}... stopping training!")
+                    print(f"Loss is {loss.item()}... stopping training!")
                     return # Just return to stop training ¯\_(ツ)_/¯
                 
                 loss.backward()
@@ -214,9 +214,9 @@ def main():
     os.makedirs(log_dir, exist_ok=True)
     os.makedirs(save_dir, exist_ok=True)
 
-    logging.info(f"Starting new run with id: {run_id}")
-    logging.info(f"Saving logs at:           {log_dir}")
-    logging.info(f"Saving checkpoints at:    {save_dir}")
+    print(f"Starting new run with id: {run_id}")
+    print(f"Saving logs at:           {log_dir}")
+    print(f"Saving checkpoints at:    {save_dir}")
 
     config = medicus.utils.parse(
         args,
@@ -226,10 +226,10 @@ def main():
         log_dir=log_dir,
         save_dir=save_dir
     )
-    logging.info("Run with config:")
-    logging.info(json.dumps(config, indent=2))
+    print("Run with config:")
+    print(json.dumps(config, indent=2))
     config_path = f"{log_dir}/config.json"
-    logging.info(f"Saving config at: {config_path}")
+    print(f"Saving config at: {config_path}")
     with open(config_path, "w") as file:
         json.dump(config, file)
 
@@ -275,11 +275,11 @@ def main():
         inference_samples = state_dict["inference_samples"]
         inference_targets = state_dict["inference_targets"]
 
-        logging.info(f"Resuming training from checkpoint at {args.resume_from}")
-        logging.info(f"    Last loss:             {last_loss}")
-        logging.info(f"    Resumed epoch:         {resume_epoch}")
-        logging.info(f"    Resumed step in epoch: {resume_step}")
-        logging.info(f"    Resumed global step:   {global_step}")
+        print(f"Resuming training from checkpoint at {args.resume_from}")
+        print(f"    Last loss:             {last_loss}")
+        print(f"    Resumed epoch:         {resume_epoch}")
+        print(f"    Resumed step in epoch: {resume_step}")
+        print(f"    Resumed global step:   {global_step}")
 
     train(
         model=model,
