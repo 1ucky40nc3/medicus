@@ -102,5 +102,23 @@ def arguments() -> argparse.Namespace:
         type=int,
         help="The for checkpoints of the model weights"
     )
+    parser.add_argument(
+        "--log_dir",
+        default="runs/{}/logs",
+        type=str,
+        help="Directory for logging."
+    )
+    parser.add_argument(
+        "--save_dir",
+        default="runs/{}/checkpoints",
+        type=str,
+        help="Directory to save checkpoints in."
+    )
+    parser.add_argument(
+        "--resume_from",
+        default=None,
+        type=str,
+        help="Directory with checkpoint to resume from."
+    )
     return parser
 
