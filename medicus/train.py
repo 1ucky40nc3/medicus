@@ -47,9 +47,6 @@ LRScheduler = Any
 
 import medicus
 
-from medicus.utils import ArgumentParser
-from medicus.configs import default
-
 from .objectives.unet import dice_loss
 from .utils import timestamp, parse, inference, evaluate, Writer, masks2imgs
 
@@ -60,82 +57,22 @@ def train(
     optimizer: optim.Optimizer,
     lr_scheduler: LRScheduler,
     train_dataloader: DataLoader,
-    eval_dataloader: DataLoader,
+    test_dataloader: DataLoader,
+    writer: medicus.logging.Writer,
+    test_samples: Optional[torch.Tensor] = None,
+    test_targets: Optional[torch.Tensor] = None,
     num_epochs: int = 20,
-    model_config: Dict[str, Any] = {},
-    optimizer_config: Dict[str, Any] = {},
-    lr_scheduler_config: Dict[str, Any] = {},
-    device: Optional[str] = None,
-    log_dir: str = "runs/{}/logs",
-    save_dir: str = "runs/{}/checkpoints",
-    resume_from: Optional[str] = None,
+    resume_epoch: int = 0,
+    resume_step: int = 0,
+    global_step: int = 0,
     log_every: int = 50,
     eval_every: int = 4_000,
     save_every: int = 20_000,
-    methods: Tuple[str] = ("tensorboard",),
-    project: Optional[str] = None,
-    notes: Optional[str] = None,
-    tags: Optional[List[str]] = None
+    save_dir: str = "runs/{}/checkpoints",
+    device: Optional[str] = None,
 ) -> None:
-    run_id = timestamp()
-    log_dir = log_dir.format(run_id)
-    save_dir = save_dir.format(run_id)
-    os.makedirs(log_dir, exist_ok=True)
-    os.makedirs(save_dir, exist_ok=True)
-
-    logging.info(f"Starting new run with id: {run_id}")
-    logging.info(f"Saving logs at:           {log_dir}")
-    logging.info(f"Saving checkpoints at:    {save_dir}")
-
-    config = parse(locals())
-    logging.info("Run with config:")
-    logging.info(json.dumps(config, indent=2))
-    config_path = f"{log_dir}/config.json"
-    logging.info(f"Saving config at: {config_path}")
-    with open(config_path, "w") as file:
-        json.dump(config, file)
-
-    writer = Writer(**config)
-
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    # model = model(**model_config)
-    model = model.to(device)
-
-    sample, _ = next(iter(train_dataloader))
-    summary(model, input_size=sample.shape[1:])
-
-    optimizer = optimizer(model.parameters(), **optimizer_config)
-    lr_scheduler = lr_scheduler(optimizer, **lr_scheduler_config)
-
-    resume_epoch = 0
-    resume_step = 0
-    global_step = 0
-
-    test_samples, test_targets = next(iter(eval_dataloader))
-
-    if resume_from:
-        state_dict = torch.load(resume_from)
-
-        model.load_state_dict(state_dict["model"])
-        optimizer.load_state_dict(state_dict["optimizer"])
-        lr_scheduler.load_state_dict(state_dict["lr_scheduler"])
-
-        last_loss = state_dict["loss"]
-        resume_epoch = state_dict["epoch"]
-        resume_step = state_dict["step"]
-        global_step = (resume_step + 1) + resume_epoch * len(train_dataloader)
-
-        test_samples = state_dict["test_samples"]
-        test_targets = state_dict["test_targets"]
-
-        logging.info(f"Resuming training from checkpoint at {resume_from}")
-        logging.info(f"    Last loss:             {last_loss}")
-        logging.info(f"    Resumed epoch:         {resume_epoch}")
-        logging.info(f"    Resumed step in epoch: {resume_step}")
-        logging.info(f"    Resumed global step:   {global_step}")
-
-    writer.images("Images/test_samples", test_samples, global_step)
-    writer.images("Images/test_targets", masks2imgs(test_targets), global_step)
+    if None in (test_samples, test_targets):
+        test_samples, test_targets = next(iter(test_dataloader))
 
     for i in range(resume_epoch, num_epochs):
         desc = f"Training...[{i + 1}/{num_epochs}]"
@@ -163,7 +100,7 @@ def train(
                 loss = loss_fn(outputs, y)
 
                 if not math.isfinite(loss.item()) or torch.isnan(loss):
-                    print(f"Loss is {loss.item()}... stopping training!")
+                    logging.error(f"Loss is {loss.item()}... stopping training!")
                     return # Just return to stop training ¯\_(ツ)_/¯
                 
                 loss.backward()
@@ -189,7 +126,7 @@ def train(
 
                     eval_mean_loss = evaluate(
                         model, 
-                        eval_dataloader, 
+                        test_dataloader, 
                         loss_fn, 
                         device=device,
                         tqdm_config=tqdm_config)
@@ -215,21 +152,24 @@ def train(
 
 
 def main():
+    # Parse the task specific arguments
     parser = medicus.utils.ArgumentParser(
         medicus.configs.default.argmuents(),
     )
     args = parser.parse_args()
 
+    # Load the configs for the respective components
     model_cfg = json.load(open(args.model))
     optim_cfg = json.load(open(args.optim))
     sched_cfg = json.load(open(args.sched))
 
+    # Retrieve the components implementations
     model = getattr(medicus.model, model_cfg["name"])
     optim = getattr(medicus.optim, optim_cfg["name"])
     sched = getattr(medicus.sched, sched_cfg["name"])
-
     loss_fn = getattr(medicus.objectives, args.loss_fn)
 
+    # Prepare the data
     shared_transform = TF.Compose([
         TF.Lambda(lambda x: torch.from_numpy(x)),
         TF.Resize((104, 104)),
@@ -258,22 +198,100 @@ def main():
         batch_size=args.batch_size
     )
 
+    # Prepare the directories for logging and saving
+    run_id = timestamp()
+    log_dir = args.log_dir.format(run_id)
+    save_dir = args.save_dir.format(run_id)
+    os.makedirs(log_dir, exist_ok=True)
+    os.makedirs(save_dir, exist_ok=True)
+
+    logging.info(f"Starting new run with id: {run_id}")
+    logging.info(f"Saving logs at:           {log_dir}")
+    logging.info(f"Saving checkpoints at:    {save_dir}")
+
+    config = medicus.utils.parse(
+        args,
+        model_cfg=model_cfg,
+        optim_cfg=optim_cfg,
+        sched_cfg=sched_cfg,
+        log_dir=log_dir,
+        save_dir=save_dir
+    )
+    logging.info("Run with config:")
+    logging.info(json.dumps(config, indent=2))
+    config_path = f"{log_dir}/config.json"
+    logging.info(f"Saving config at: {config_path}")
+    with open(config_path, "w") as file:
+        json.dump(config, file)
+
+    # Initialize the writer for logging
+    writer = medicus.logging.Writer(
+        methods=args.logging_methods,
+        log_dir=log_dir,
+        project=args.project,
+    )
+
+    # Initialize the model
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu") # TODO: let user specify device
+    model = model(**model_cfg["config"])
+    model = model.to(device)
+
+    # Display the model
+    sample, _ = next(iter(train_dataloader))
+    summary(model, input_size=sample.shape[1:]) # TODO: where is the summary fn implemented?
+
+    # Initialize optimizer and the learning rate schedule
+    optimizer = optimizer(model.parameters(), **optim_cfg["config"])
+    lr_scheduler = lr_scheduler(optimizer, **sched_cfg["config"])
+
+    test_samples = None
+    test_targets = None
+    resume_epoch = 0
+    resume_step = 0
+    global_step = 0
+
+    # Resume the training components from a checkpoint
+    if args.resume_from:
+        state_dict = torch.load(args.resume_from)
+
+        model.load_state_dict(state_dict["model"])
+        optimizer.load_state_dict(state_dict["optimizer"])
+        lr_scheduler.load_state_dict(state_dict["lr_scheduler"])
+
+        last_loss = state_dict["loss"]
+        resume_epoch = state_dict["epoch"]
+        resume_step = state_dict["step"]
+        global_step = (resume_step + 1) + resume_epoch * len(train_dataloader)
+
+        test_samples = state_dict["test_samples"]
+        test_targets = state_dict["test_targets"]
+
+        logging.info(f"Resuming training from checkpoint at {args.resume_from}")
+        logging.info(f"    Last loss:             {last_loss}")
+        logging.info(f"    Resumed epoch:         {resume_epoch}")
+        logging.info(f"    Resumed step in epoch: {resume_step}")
+        logging.info(f"    Resumed global step:   {global_step}")
+
     train(
         model=model,
         loss_fn=loss_fn,
         optimizer=optim,
         lr_scheduler=sched,
         train_dataloader=train_dataloader,
-        eval_dataloader=test_dataloader,
+        test_dataloader=test_dataloader,
+        writer=writer,
+        test_samples=test_samples,
+        test_targets=test_targets,
         num_epochs=args.num_epochs,
-        model_config=model_cfg["config"],
-        optimizer_config=optim_cfg["config"],
-        lr_scheduler_config=sched_cfg["config"],
+        resume_epoch=resume_epoch,
+        resume_step=resume_step,
+        global_step=global_step,
+        log_every=args.log_every,
         eval_every=args.eval_every,
         save_every=args.save_every,
-        methods=args.logging_methds
+        save_dir=args.save_dir,
+        device=device
     )
-
 
 if __name__ == "__main__":
     main()
