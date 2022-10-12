@@ -2,7 +2,7 @@ import argparse
 
 
 def arguments() -> argparse.Namespace:
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument(
         "--dataset_name",
         type=str,
