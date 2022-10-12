@@ -87,7 +87,7 @@ class ArgumentParser:
     def __init__(self, *args) -> None:
         self.parser = argparse.ArgumentParser(parents=args)
     
-    def parse(self) -> argparse.Namespace:
+    def parse_args(self) -> argparse.Namespace:
         return self.parser.parse_args()
 
 
