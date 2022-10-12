@@ -253,8 +253,8 @@ def main():
     optimizer = optimizer(model.parameters(), **optim_cfg["config"])
     lr_scheduler = lr_scheduler(optimizer, **sched_cfg["config"])
 
-    test_samples = None
-    test_targets = None
+    inference_samples = None
+    inference_targets = None
     resume_epoch = 0
     resume_step = 0
     global_step = 0
@@ -289,8 +289,8 @@ def main():
         train_dataloader=train_dataloader,
         test_dataloader=test_dataloader,
         writer=writer,
-        inference_samples=test_samples,
-        inference_samples=test_targets,
+        inference_samples=inference_samples,
+        inference_targets=inference_targets,
         num_epochs=args.num_epochs,
         resume_epoch=resume_epoch,
         resume_step=resume_step,
