@@ -21,7 +21,7 @@ def arguments() -> argparse.Namespace:
     )
     parser.add_argument(
         "--model",
-        default="medicus/configs/model/unet.json",
+        default="medicus/configs/models/unet.json",
         type=str,
         help="A file describing your model config"
     )
