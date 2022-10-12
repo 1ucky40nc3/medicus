@@ -167,7 +167,7 @@ def train(
 def main():
     # Parse the task specific arguments
     parser = medicus.utils.ArgumentParser(
-        medicus.configs.default.argmuents(),
+        medicus.configs.default.arguments(),
     )
     args = parser.parse_args()
 
