@@ -85,7 +85,7 @@ def train(
     )
     writer.add_images(
         "Images/inference/targets",
-        masks2imgs(inference_targets),
+        medicus.utils.masks2imgs(inference_targets),
         global_step
     )
 
@@ -136,7 +136,7 @@ def train(
 
                     writer.images(
                         "Images/inference/outputs", 
-                        masks2imgs(outputs),
+                        medicus.utils.masks2imgs(outputs),
                         global_step
                     )
 
