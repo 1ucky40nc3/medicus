@@ -59,8 +59,8 @@ def train(
     train_dataloader: DataLoader,
     test_dataloader: DataLoader,
     writer: medicus.logging.Writer,
-    test_samples: Optional[torch.Tensor] = None,
-    test_targets: Optional[torch.Tensor] = None,
+    inference_samples: Optional[torch.Tensor] = None,
+    inference_targets: Optional[torch.Tensor] = None,
     num_epochs: int = 20,
     resume_epoch: int = 0,
     resume_step: int = 0,
@@ -71,8 +71,19 @@ def train(
     save_dir: str = "runs/{}/checkpoints",
     device: Optional[str] = None,
 ) -> None:
-    if None in (test_samples, test_targets):
-        test_samples, test_targets = next(iter(test_dataloader))
+    if None in (inference_samples, inference_samples):
+        inference_samples, inference_samples = next(iter(test_dataloader))
+
+    writer.add_images(
+        "Images/inference/samples",
+        inference_samples,
+        global_step
+    )
+    writer.add_images(
+        "Images/inference/targets",
+        masks2imgs(inference_targets),
+        global_step
+    )
 
     for i in range(resume_epoch, num_epochs):
         desc = f"Training...[{i + 1}/{num_epochs}]"
@@ -117,26 +128,30 @@ def train(
                 
                 if global_step % eval_every == 0:
                     outputs = inference(
-                        model, test_samples, device=device)
+                        model, inference_samples, device=device)
 
                     writer.images(
-                        "Images/test_outputs", 
+                        "Images/inference/outputs", 
                         masks2imgs(outputs),
-                        global_step)
+                        global_step
+                    )
 
                     eval_mean_loss = evaluate(
                         model, 
                         test_dataloader, 
                         loss_fn, 
                         device=device,
-                        tqdm_config=tqdm_config)
+                        tqdm_config=tqdm_config
+                    )
                     
                     iterator.set_postfix(
-                        eval_mean_loss=eval_mean_loss.item())
+                        eval_mean_loss=eval_mean_loss.item()
+                    )
                     writer.scalar(
-                        "Loss/eval_mean",
+                        "Loss/eval",
                         eval_mean_loss,
-                        global_step)
+                        global_step
+                    )
                     
                 if global_step % save_every == 0:
                     torch.save({
@@ -146,8 +161,8 @@ def train(
                         "loss": loss,
                         "epoch": i,
                         "step": j,
-                        "test_samples": test_samples,
-                        "test_targets": test_targets
+                        "inference_samples": inference_samples,
+                        "inference_samples": inference_targets
                     }, f"{save_dir}/ckpt_{global_step}")
 
 
@@ -263,8 +278,8 @@ def main():
         resume_step = state_dict["step"]
         global_step = (resume_step + 1) + resume_epoch * len(train_dataloader)
 
-        test_samples = state_dict["test_samples"]
-        test_targets = state_dict["test_targets"]
+        inference_samples = state_dict["inference_samples"]
+        inference_targets = state_dict["inference_targets"]
 
         logging.info(f"Resuming training from checkpoint at {args.resume_from}")
         logging.info(f"    Last loss:             {last_loss}")
@@ -280,8 +295,8 @@ def main():
         train_dataloader=train_dataloader,
         test_dataloader=test_dataloader,
         writer=writer,
-        test_samples=test_samples,
-        test_targets=test_targets,
+        inference_samples=test_samples,
+        inference_samples=test_targets,
         num_epochs=args.num_epochs,
         resume_epoch=resume_epoch,
         resume_step=resume_step,
