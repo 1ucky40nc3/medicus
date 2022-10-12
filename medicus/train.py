@@ -136,7 +136,7 @@ def train(
                         global_step
                     )
 
-                    eval_mean_loss = evaluate(
+                    eval_loss = evaluate(
                         model, 
                         test_dataloader, 
                         loss_fn, 
@@ -144,14 +144,8 @@ def train(
                         tqdm_config=tqdm_config
                     )
                     
-                    iterator.set_postfix(
-                        eval_mean_loss=eval_mean_loss.item()
-                    )
-                    writer.scalar(
-                        "Loss/eval",
-                        eval_mean_loss,
-                        global_step
-                    )
+                    iterator.set_postfix(eval_loss=eval_loss.item())
+                    writer.scalar("Loss/eval", eval_loss, global_step)
                     
                 if global_step % save_every == 0:
                     torch.save({
