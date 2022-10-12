@@ -52,7 +52,7 @@ def shared_transform(
 
     if rand_ints[1] <= random_crop:
         transforms.append(
-            T.RandomCrop(size = (100, 100))
+            T.RandomCrop(size = (128, 128))
         )
 
     if rand_ints[2] <= horizontal_flip:
