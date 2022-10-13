@@ -176,6 +176,32 @@ def main():
     optim_cfg = json.load(open(args.optim))
     sched_cfg = json.load(open(args.sched))
 
+    # Prepare the directories for logging and saving
+    run_id = timestamp()
+    log_dir = args.log_dir.format(run_id)
+    save_dir = args.save_dir.format(run_id)
+    os.makedirs(log_dir, exist_ok=True)
+    os.makedirs(save_dir, exist_ok=True)
+
+    print(f"Starting new run with id: {run_id}")
+    print(f"Saving logs at:           {log_dir}")
+    print(f"Saving checkpoints at:    {save_dir}")
+
+    config = medicus.utils.parse(
+        args,
+        model_cfg=model_cfg,
+        optim_cfg=optim_cfg,
+        sched_cfg=sched_cfg,
+        log_dir=log_dir,
+        save_dir=save_dir
+    )
+    print("Run with config:")
+    print(json.dumps(config, indent=2))
+    config_path = f"{log_dir}/config.json"
+    print(f"Saving config at: {config_path}")
+    with open(config_path, "w") as file:
+        json.dump(config, file)
+
     # Retrieve the components implementations
     model = getattr(medicus.model, model_cfg["name"])
     optim = getattr(medicus.optim, optim_cfg["name"])
@@ -210,32 +236,6 @@ def main():
         dataset=test_dataset,
         batch_size=args.batch_size
     )
-
-    # Prepare the directories for logging and saving
-    run_id = timestamp()
-    log_dir = args.log_dir.format(run_id)
-    save_dir = args.save_dir.format(run_id)
-    os.makedirs(log_dir, exist_ok=True)
-    os.makedirs(save_dir, exist_ok=True)
-
-    print(f"Starting new run with id: {run_id}")
-    print(f"Saving logs at:           {log_dir}")
-    print(f"Saving checkpoints at:    {save_dir}")
-
-    config = medicus.utils.parse(
-        args,
-        model_cfg=model_cfg,
-        optim_cfg=optim_cfg,
-        sched_cfg=sched_cfg,
-        log_dir=log_dir,
-        save_dir=save_dir
-    )
-    print("Run with config:")
-    print(json.dumps(config, indent=2))
-    config_path = f"{log_dir}/config.json"
-    print(f"Saving config at: {config_path}")
-    with open(config_path, "w") as file:
-        json.dump(config, file)
 
     # Initialize the writer for logging
     writer = medicus.logging.Writer(
