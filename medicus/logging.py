@@ -33,11 +33,13 @@ class Writer:
         config: Optional[dict] = None,
         **kwargs
     ) -> None:
+        methods = set(methods) if isinstance(methods, (list, tuple)) else [methods]
         assert all(t in self.logger_methods for t in methods), (
             "Error: A wrong item in `logger_methods` was supplied! " + 
-            f"All possible logger types are: {self.logger_methods}")
+            f"All possible logger types are: {self.logger_methods}" +
+            f"The proviced methods were: {methods}")
         
-        self.methods = set(methods)
+        self.methods = methods
         self.log_dir = log_dir
         self.project = project
         self.config = config
