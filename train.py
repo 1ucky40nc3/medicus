@@ -78,12 +78,12 @@ def train(
     if None in (inference_samples, inference_samples):
         inference_samples, inference_samples = next(iter(test_dataloader))
 
-    writer.add_images(
+    writer.images(
         "Images/inference/samples",
         inference_samples,
         global_step
     )
-    writer.add_images(
+    writer.images(
         "Images/inference/targets",
         medicus.utils.masks2imgs(inference_targets),
         global_step
