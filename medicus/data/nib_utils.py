@@ -15,10 +15,15 @@ import nibabel.processing as nip
 import nibabel.orientations as nio
 
 import matplotlib.pyplot as plt
-from matplotlib.colors import ListedColormap, Normalize
+from matplotlib.colors import (
+    ListedColormap, 
+    Normalize
+)
 from matplotlib.patches import Circle
 
-from medicus.utils.affines import *
+from medicus.data.utils import (
+    rescale_affine
+)
 
 
 # define HU windows
