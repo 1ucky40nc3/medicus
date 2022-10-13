@@ -33,7 +33,7 @@ def arguments() -> argparse.Namespace:
     )
     parser.add_argument(
         "--sched",
-        default="medicus/configs/schedulers/linear.json",
+        default="medicus/configs/schedulers/steplr.json",
         type=str,
         help="A file describing your optimizer config"
     )
