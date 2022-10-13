@@ -5,3 +5,4 @@ from . import model
 from . import optim
 from . import sched
 from . import data
+from . import objectives
