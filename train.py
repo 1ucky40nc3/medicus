@@ -75,8 +75,8 @@ def train(
     save_dir: str = "runs/{}/checkpoints",
     device: Optional[str] = None,
 ) -> None:
-    if None in (inference_samples, inference_samples):
-        inference_samples, inference_samples = next(iter(test_dataloader))
+    if None in (inference_samples, inference_targets):
+        inference_samples, inference_targets = next(iter(test_dataloader))
 
     writer.images(
         "Images/inference/samples",
