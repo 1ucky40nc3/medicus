@@ -5,11 +5,13 @@ def arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument(
         "--dataset_name",
+        default="shapes",
         type=str,
         help="Name of the dataset."
     )
     parser.add_argument(
         "--dataset_dir",
+        default="datasets/shapes",
         type=str,
         help="Dataset directory"
     )
