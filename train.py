@@ -288,8 +288,8 @@ def main():
     train(
         model=model,
         loss_fn=loss_fn,
-        optimizer=optim,
-        lr_scheduler=sched,
+        optimizer=optimizer,
+        lr_scheduler=lr_scheduler,
         train_dataloader=train_dataloader,
         test_dataloader=test_dataloader,
         writer=writer,
