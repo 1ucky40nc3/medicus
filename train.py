@@ -202,11 +202,12 @@ def main():
     with open(config_path, "w") as file:
         json.dump(config, file)
 
-    # Retrieve the components implementations
-    model = getattr(medicus.model, model_cfg["name"])
-    optim = getattr(medicus.optim, optim_cfg["name"])
-    sched = getattr(medicus.sched, sched_cfg["name"])
-    loss_fn = getattr(medicus.objectives, args.loss_fn)
+    # Initialize the writer for logging
+    writer = medicus.logging.Writer(
+        methods=args.logging_method,
+        log_dir=log_dir,
+        project=args.project,
+    )
 
     # Prepare the data
     shared_transform = TF.Compose([
@@ -237,12 +238,11 @@ def main():
         batch_size=args.batch_size
     )
 
-    # Initialize the writer for logging
-    writer = medicus.logging.Writer(
-        methods=args.logging_method,
-        log_dir=log_dir,
-        project=args.project,
-    )
+    # Retrieve the components implementations
+    model = getattr(medicus.model, model_cfg["name"])
+    optim = getattr(medicus.optim, optim_cfg["name"])
+    sched = getattr(medicus.sched, sched_cfg["name"])
+    loss_fn = getattr(medicus.objectives, args.loss_fn)
 
     # Initialize the model
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu") # TODO: let user specify device
@@ -254,8 +254,8 @@ def main():
     summary(model, input_size=sample.shape[1:]) # TODO: where is the summary fn implemented?
 
     # Initialize optimizer and the learning rate schedule
-    optimizer = optimizer(model.parameters(), **optim_cfg["config"])
-    lr_scheduler = lr_scheduler(optimizer, **sched_cfg["config"])
+    optimizer = optim(model.parameters(), **optim_cfg["config"])
+    lr_scheduler = sched(optimizer, **sched_cfg["config"])
 
     inference_samples = None
     inference_targets = None
