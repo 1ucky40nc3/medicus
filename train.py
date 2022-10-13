@@ -92,7 +92,7 @@ def train(
     for i in range(resume_epoch, num_epochs):
         desc = f"Training...[{i + 1}/{num_epochs}]"
         tqdm_config = {"position": 0, "leave": False}
-        with tqdm(train_dataloader, desc=desc, unit="batch", **tqdm_config) as iterator:
+        with tqdm(train_dataloader, desc=desc, unit=" batch", **tqdm_config) as iterator:
             metric = MeanMetric()
 
             for j, (x, y) in enumerate(iterator):
@@ -302,7 +302,7 @@ def main():
         log_every=args.log_every,
         eval_every=args.eval_every,
         save_every=args.save_every,
-        save_dir=args.save_dir,
+        save_dir=save_dir,
         device=device
     )
 
