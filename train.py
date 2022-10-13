@@ -239,7 +239,7 @@ def main():
 
     # Initialize the writer for logging
     writer = medicus.logging.Writer(
-        methods=args.logging_methods,
+        methods=args.logging_method,
         log_dir=log_dir,
         project=args.project,
     )
