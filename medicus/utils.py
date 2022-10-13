@@ -92,5 +92,5 @@ class ArgumentParser:
 
 
 def parse(args: argparse.Namespace, **kwargs) -> dict:
-    config = {**{vars(args)}, **kwargs}
+    config = {**vars(args), **kwargs}
     return config
