@@ -92,7 +92,7 @@ def arguments():
     )
     parser.add_argument(
         "--nnUNet_RESULTS_FOLDER",
-        default="RESULTS_FOLDER",
+        default="result",
         type=str,
         help=(
             "The path to the results directory."
