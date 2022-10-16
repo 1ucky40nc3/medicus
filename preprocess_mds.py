@@ -133,7 +133,7 @@ def main():
         raise NotImplementedError()
     
     # Remove hidden files from the MSD task directory
-    nnUNet_convert_decathlon_task.crawl_and_remove_from_decathlon(args.task)
+    nnUNet_convert_decathlon_task.crawl_and_remove_hidden_from_decathlon(args.task)
     task_id = parse_task_id(args)
     split_4d(args.task, args.num_processes, task_id)
 
