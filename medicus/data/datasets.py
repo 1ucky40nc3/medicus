@@ -102,7 +102,7 @@ class SharedTransformDataset:
         return self.share_transform_random_seed
 
     def load(self, path: str) -> Any:
-        raise NotImplementedError
+        raise NotImplementedError()
 
     def __getitem__(
         self, 
