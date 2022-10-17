@@ -113,16 +113,15 @@ def set_environ(
 
 def parse_task_id(
     args: argparse.Namespace        
-) -> str:
+) -> int:
     if not args.task_id:
         task = args.task.split("/")[-1]
         task_id = task.split("Task")[-1]
         task_id = task_id.split("_")[0]
         task_id = int(task_id)
-        task_id = f"{task_id:03d}"
         return task_id
 
-    return args.task_id
+    return int(args.task_id)
 
 
 def main():
