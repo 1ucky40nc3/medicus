@@ -12,6 +12,7 @@ import torch
 import matplotlib.pyplot as plt
 import numpy as np
 from natsort import natsorted
+from collections import deque
 
 
 def filename(path: str) -> str:
@@ -179,7 +180,6 @@ def save_voxel_as_png(target_dir, data, addition = 0, mult = 1, isDataloader = T
 
             if not os.path.exists(img_path): os.makedirs(img_path)
             if not os.path.exists(mask_path): os.makedirs(mask_path)
-
             x = (x + addition)*mult#/4095
             y = np.where(y>0,255,0)
             for n, (img_slice, mask_slice) in enumerate(zip(x,y)):
@@ -196,3 +196,85 @@ def save_voxel_as_png(target_dir, data, addition = 0, mult = 1, isDataloader = T
 
             img = Image.fromarray(x).convert("RGB")
             img.save(f'{target_dir}/file{i}.png')
+
+        x = (x + addition)*mult#/4095
+        y = np.where(y>0,255,0)
+        for n, (img_slice, mask_slice) in enumerate(zip(x,y)):
+          #img_slice = (img_slice + 1024)*65535/4095
+          mask_slice = mask_slice
+          img = Image.fromarray(img_slice).convert("RGB")
+          mask = Image.fromarray(mask_slice).convert("RGB")
+          img.save(f'{img_path}/file{n}.png')
+          mask.save(f'{mask_path}/file{n}.png')
+            
+            
+class RegionGrow3D:
+    
+  """
+  Funktion zur dreidimensionalen Regiongrowing.
+  ---
+  input:
+    images: 3d Array, bei dem Regiongrowing betrieben werden soll
+    masks:  3d Array, welches mit 0 und 1 die irrelevanten/relevanten Stellen des Bildes zeigt
+                irrelevant -> dort kein Regiongrowing
+    upperThreshold: oberer Schwellenwert für die benachbarten Voxel
+    lowerThreshold: unterer Schwellenwert für die benachbarten Voxel
+    neighborMode: states wether to use just the direct neighbors ("6n") or the directional neighbors too ("26n")
+    
+  """
+    
+    def __init__(self, images, masks, upperThreshold,
+                 lowerThreshold, neighborMode):
+        self.images = images
+        self.masks = masks
+        self.outputMask = np.zeros_like(self.images)
+        self.sz = images.shape[0]
+        self.sy = images.shape[1]
+        self.sx = images.shape[2]
+        self.upperThreshold = upperThreshold
+        self.lowerThreshold = lowerThreshold
+        self.neighborMode = neighborMode
+        self.queue = deque()
+    
+    def main(self, seed):
+        newItem = seed
+        
+        self.outputMask[newItem[0], newItem[1], newItem[2]] = 1
+        self.queue.append((seed[0], seed[1], seed[2]))
+        
+        while len(self.queue) != 0:
+            newItem = self.queue.pop()
+            if self.neighborMode == "26n":
+                neighbors = [[newItem[0]-1, newItem[1]-1, newItem[2]-1],   [newItem[0]-1, newItem[1]-1, newItem[2]],   [newItem[0]-1, newItem[1]-1, newItem[2]+1],
+                             [newItem[0]-1, newItem[1], newItem[2]-1],     [newItem[0]-1, newItem[1], newItem[2]],     [newItem[0]-1, newItem[1], newItem[2]+1],
+                             [newItem[0]-1, newItem[1]+1, newItem[2]-1],   [newItem[0]-1, newItem[1]+1, newItem[2]],   [newItem[0]-1, newItem[1]+1, newItem[2]+1],
+                             [newItem[0], newItem[1]-1, newItem[2]-1],     [newItem[0], newItem[1]-1, newItem[2]],     [newItem[0], newItem[1]-1, newItem[2]+1],
+                             [newItem[0], newItem[1], newItem[2]-1],       [newItem[0], newItem[1], newItem[2]+1],     [newItem[0], newItem[1]+1, newItem[2]-1],
+                             [newItem[0], newItem[1]+1, newItem[2]],       [newItem[0], newItem[1]+1, newItem[2]+1],   [newItem[0]+1, newItem[1]-1, newItem[2]-1],
+                             [newItem[0]+1, newItem[1]-1, newItem[2]],     [newItem[0]+1, newItem[1]-1, newItem[2]+1], [newItem[0]+1, newItem[1], newItem[2]-1],
+                             [newItem[0]+1, newItem[1], newItem[2]],       [newItem[0]+1, newItem[1], newItem[2]+1],   [newItem[0]+1, newItem[1]+1, newItem[2]-1],
+                             [newItem[0]+1, newItem[1]+1, newItem[2]],     [newItem[0]+1, newItem[1]+1, newItem[2]+1]] 
+                for neighbor in neighbors:
+                    self.checkNeighbour(neighbor[0], neighbor[1], neighbor[2])
+            elif self.neighborMode == "6n":
+                self.checkNeighbour(newItem[0], newItem[1], newItem[2]-1)
+                self.checkNeighbour(newItem[0], newItem[1], newItem[2]+1)
+                self.checkNeighbour(newItem[0], newItem[1]-1, newItem[2])
+                self.checkNeighbour(newItem[0], newItem[1]+1, newItem[2])
+                self.checkNeighbour(newItem[0]-1, newItem[1], newItem[2])
+                self.checkNeighbour(newItem[0]+1, newItem[1], newItem[2])
+        return self.outputMask
+        
+    def checkNeighbour(self, z, y, x):
+        if (x < self.sx and y < self.sy and z < self.sz 
+            and x > -1 and y > -1 and z > -1 
+            and self.masks[z,y,x] == 1):
+            intensity = self.images[z, y, x]
+            if self.isIntensityAcceptable(intensity) and self.outputMask[z,y,x] == 0:
+                self.outputMask[z,y,x] = 1
+                self.queue.append((z, y, x))
+    
+    def isIntensityAcceptable(self, intensity):
+        if intensity < self.upperThreshold and intensity > self.lowerThreshold:
+            return True
+        return False  
