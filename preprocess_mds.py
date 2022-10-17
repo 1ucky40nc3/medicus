@@ -157,7 +157,7 @@ def main():
     # Find the 3D experiment planner class 
     planner_3d = recursive_find_python_class(
         [search_in], 
-        args.planner_name3d, 
+        args.planner3d, 
         current_module="nnunet.experiment_planning"
     )
     if planner_3d is None:
@@ -165,7 +165,7 @@ def main():
     # Find the 2D experiment planner class
     planner_2d = recursive_find_python_class(
         [search_in], 
-        args.planner_name2d, 
+        args.planner2d, 
         current_module="nnunet.experiment_planning"
     )
     if planner_2d is None:
