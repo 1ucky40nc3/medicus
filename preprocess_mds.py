@@ -140,7 +140,11 @@ def main():
     # Optionally verify the dataset integrity
     if args.verify_dataset_integrity:
         verify_dataset_integrity(
-            os.path.join(args.nnUNet_raw_data_base, task_name)
+            os.path.join(
+                args.nnUNet_raw_data_base, 
+                "nnUNet_raw_data",
+                task_name
+            )
         )
     
     crop(task_name, False, args.num_processes)
