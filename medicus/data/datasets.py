@@ -71,10 +71,10 @@ class SharedTransformDataset:
         #pat_dir -> True: für jeden Patienten existiert ein einzelner Unterordner, False: alle Dateien im gleichen Ordner
         if(pat_dir):
           samples_list, targets_list = list_dir_dataset_files(
-              sample_dir, target_dir)
+              sample_dir, target_dir, allow_different_names= True)
         else:
           samples_list, targets_list = list_dataset_files(
-              sample_dir, target_dir)
+              sample_dir, target_dir, allow_different_names= True)
 
         self.samples_list = samples_list
         self.targets_list = targets_list
@@ -297,7 +297,7 @@ class NiftiImageDataset:
                 target_dir=self.mask_dir, 
                 sample_format=f".{format}",
                 target_format=f".{format}",
-                allow_different_names=True)
+                allow_different_names = True)
 
 
     def __len__(self):

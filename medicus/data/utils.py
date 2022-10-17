@@ -171,20 +171,28 @@ def save_data_as_png(target_dir, data, start_with = 0, addition = 1024, mult = 6
         img.save(f'{target_dir}/images/file{i + start_with}.png')
         mask.save(f'{target_dir}/masks/file{i + start_with}.png')
 
-def save_voxel_as_png(target_dir, data, addition = 0, mult = 1):
-    for i, (x, y) in enumerate(data):
-        img_path = target_dir + f'/images/pat{i}'
-        mask_path = target_dir + f'/masks/pat{i}'
+def save_voxel_as_png(target_dir, data, addition = 0, mult = 1, isDataloader = True):
+    if isDataloader:
+        for i, (x, y) in enumerate(data):
+            img_path = target_dir + f'/images/pat{i}'
+            mask_path = target_dir + f'/masks/pat{i}'
 
-        if not os.path.exists(img_path): os.makedirs(img_path)
-        if not os.path.exists(mask_path): os.makedirs(mask_path)
+            if not os.path.exists(img_path): os.makedirs(img_path)
+            if not os.path.exists(mask_path): os.makedirs(mask_path)
 
-        x = (x + addition)*mult#/4095
-        y = np.where(y>0,255,0)
-        for n, (img_slice, mask_slice) in enumerate(zip(x,y)):
-          #img_slice = (img_slice + 1024)*65535/4095
-          mask_slice = mask_slice
-          img = Image.fromarray(img_slice).convert("RGB")
-          mask = Image.fromarray(mask_slice).convert("RGB")
-          img.save(f'{img_path}/file{n}.png')
-          mask.save(f'{mask_path}/file{n}.png')
+            x = (x + addition)*mult#/4095
+            y = np.where(y>0,255,0)
+            for n, (img_slice, mask_slice) in enumerate(zip(x,y)):
+                #img_slice = (img_slice + 1024)*65535/4095
+                mask_slice = mask_slice
+                img = Image.fromarray(img_slice).convert("RGB")
+                mask = Image.fromarray(mask_slice).convert("RGB")
+                img.save(f'{img_path}/file{n}.png')
+                mask.save(f'{mask_path}/file{n}.png')
+    else:
+        for i, (x) in enumerate(data):
+            img_path = target_dir
+            if not os.path.exists(target_dir): os.makedirs(target_dir)
+
+            img = Image.fromarray(x).convert("RGB")
+            img.save(f'{target_dir}/file{i}.png')
