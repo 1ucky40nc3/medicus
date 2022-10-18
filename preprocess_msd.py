@@ -196,7 +196,7 @@ def main():
     dataset_analyzer.analyze_dataset(collect_intensity)
 
     # Prepare the dir with preprocessed data
-    os.makedirs(args.nnUNet_preprocessed, exist_ok=True)
+    os.makedirs(prep_dir, exist_ok=True)
     shutil.copy(
         os.path.join(
             args.nnUNet_raw_data_base,
