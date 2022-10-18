@@ -195,33 +195,22 @@ def save_voxel_as_png(target_dir, data, addition = 0, mult = 1, isDataloader = T
             if not os.path.exists(target_dir): os.makedirs(target_dir)
 
             img = Image.fromarray(x).convert("RGB")
-            img.save(f'{target_dir}/file{i}.png')
-
-        x = (x + addition)*mult#/4095
-        y = np.where(y>0,255,0)
-        for n, (img_slice, mask_slice) in enumerate(zip(x,y)):
-          #img_slice = (img_slice + 1024)*65535/4095
-          mask_slice = mask_slice
-          img = Image.fromarray(img_slice).convert("RGB")
-          mask = Image.fromarray(mask_slice).convert("RGB")
-          img.save(f'{img_path}/file{n}.png')
-          mask.save(f'{mask_path}/file{n}.png')
-            
-            
+            img.save(f'{target_dir}/file{i}.png')       
+                
 class RegionGrow3D:
     
-  """
-  Funktion zur dreidimensionalen Regiongrowing.
-  ---
-  input:
-    images: 3d Array, bei dem Regiongrowing betrieben werden soll
-    masks:  3d Array, welches mit 0 und 1 die irrelevanten/relevanten Stellen des Bildes zeigt
-                irrelevant -> dort kein Regiongrowing
-    upperThreshold: oberer Schwellenwert für die benachbarten Voxel
-    lowerThreshold: unterer Schwellenwert für die benachbarten Voxel
-    neighborMode: states wether to use just the direct neighbors ("6n") or the directional neighbors too ("26n")
-    
-  """
+    """
+    Funktion zur dreidimensionalen Regiongrowing.
+    ---
+    input:
+        images: 3d Array, bei dem Regiongrowing betrieben werden soll
+        masks:  3d Array, welches mit 0 und 1 die irrelevanten/relevanten Stellen des Bildes zeigt
+                    irrelevant -> dort kein Regiongrowing
+        upperThreshold: oberer Schwellenwert für die benachbarten Voxel
+        lowerThreshold: unterer Schwellenwert für die benachbarten Voxel
+        neighborMode: states wether to use just the direct neighbors ("6n") or the directional neighbors too ("26n")
+        
+    """
     
     def __init__(self, images, masks, upperThreshold,
                  lowerThreshold, neighborMode):
