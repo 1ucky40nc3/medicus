@@ -22,6 +22,12 @@ def arguments() -> argparse.Namespace:
         help="Batch size per device"
     )
     parser.add_argument(
+        "--data",
+        default="medicus/configs/data/numpy.json",
+        type=str,
+        help="A file describing your data config"
+    )
+    parser.add_argument(
         "--model",
         default="medicus/configs/models/unet.json",
         type=str,
