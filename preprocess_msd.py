@@ -219,11 +219,11 @@ def main():
     # Execute the planning
     threads = (args.num_processes)*2
 
-    exp_planner = planner_3d(cropped_dir, args.nnUNet_preprocessed)
+    exp_planner = planner_3d(cropped_dir, prep_dir)
     exp_planner.plan_experiment()
     exp_planner.run_preprocessing(threads)
 
-    exp_planner = planner_2d(cropped_dir, args.nnUNet_preprocessed)
+    exp_planner = planner_2d(cropped_dir, prep_dir)
     exp_planner.plan_experiment()
     exp_planner.run_preprocessing(threads)
 
