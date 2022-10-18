@@ -204,7 +204,7 @@ def main():
             task_name,
             "dataset_properties.pkl"
         ), 
-        args.nnUNet_preprocessed
+        prep_dir
     )
     shutil.copy(
         os.path.join(
@@ -213,7 +213,7 @@ def main():
             task_name, 
             "dataset.json"
         ), 
-        args.nnUNet_preprocessed
+        prep_dir
     )
     
     # Execute the planning
