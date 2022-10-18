@@ -277,7 +277,8 @@ class NiftiImageDataset:
         reorientation: bool = True,
         orientation: Tuple = ('I', 'P', 'R'),
         normalize: bool = True,
-        format: str = "gz"
+        format: str = "gz",
+        **kwargs
     ) -> None:
     
         self.img_dir = Path(img_dir)
@@ -393,7 +394,9 @@ class NiftiImageDataset_old:
         new_shape: Tuple = (160, 160),
         get_slices: bool = True,
         sizing: bool = True,
-        padding_value: int = 0):
+        padding_value: int = 0,
+        **kwargs
+    ):
 
         self.img_dir = Path(img_dir)
         self.mask_dir = Path(mask_dir)
@@ -491,3 +494,14 @@ class NiftiImageDataset_old:
         s = f'Dataset class with {self.__len__()} images, padded to {self.new_shape}'
 
         return s
+
+
+class nnUNetDataset:
+    def __init__(self, *args, **kwargs) -> None:
+       pass
+
+    def __len__(self) -> int:
+        return None
+
+    def __getitem__(self, idx: int) -> Any:
+        return None
