@@ -1,0 +1,17 @@
+{
+    "dataset": {
+        "name": "SharedTransformNumpyDataset",
+        "config": {
+            "base_dir": "{dataset_dir}/{dataset_name}",
+            "transforms": {
+                "resize": [104, 104]
+            }
+        }
+    },
+    "dataloader": {
+        "name": null,
+        "config": {
+            "batch_size": null
+        }
+    }
+}
