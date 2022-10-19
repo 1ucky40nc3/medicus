@@ -212,36 +212,8 @@ def main():
     )
 
     # Prepare the data
-    """
-    shared_transform = TF.Compose([
-        TF.Lambda(lambda x: torch.from_numpy(x)),
-        TF.Resize((104, 104)),
-    ])
-
-    train_dataset = medicus.data.datasets.SharedTransformNumpyDataset(
-        f"{args.dataset_dir}/{args.dataset_name}/train/samples",
-        f"{args.dataset_dir}/{args.dataset_name}/train/targets",
-        shared_transform=shared_transform,
-        return_untransformed_sample=False
-    )
-    test_dataset = medicus.data.datasets.SharedTransformNumpyDataset(
-        f"{args.dataset_dir}/{args.dataset_name}/eval/samples",
-        f"{args.dataset_dir}/{args.dataset_name}/eval/targets",
-        shared_transform=shared_transform,
-        return_untransformed_sample=False
-    )
-
-    train_dataloader = DataLoader(
-        dataset=train_dataset,
-        batch_size=args.batch_size,
-        shuffle=True
-    )
-    test_dataloader = DataLoader(
-        dataset=test_dataset,
-        batch_size=args.batch_size
-    )"""
-    train_dataloader = medicus.data.load_dataset(args, "train")
-    test_dataloader = medicus.data.load_dataset(args, "test")
+    train_dataloader = medicus.data.load_dataset(data_cfg, "train")
+    test_dataloader = medicus.data.load_dataset(data_cfg, "test")
 
     # Retrieve the components implementations
     model = getattr(medicus.model, model_cfg["name"])
