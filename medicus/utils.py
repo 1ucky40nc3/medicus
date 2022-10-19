@@ -19,9 +19,11 @@ from colour import Color
 
 import json
 import flatten_dict
+import logging
 
 
 Device = Any
+Module = Any
 
 
 def timestamp() -> str:
@@ -116,3 +118,14 @@ def load_cfg(
 
     cfg = flatten_dict.unflatten(cfg)
     return cfg
+
+
+def get_cls(
+    module: Module, 
+    name: str
+) -> Optional[Any]:
+    try:
+        return getattr(module, name)
+    except AttributeError:
+        logging.error(f"The class {name} couldn't be retrieved from {module}")
+    return None
