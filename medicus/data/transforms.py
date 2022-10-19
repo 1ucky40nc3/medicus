@@ -1,4 +1,13 @@
-from typing import Tuple
+from typing import (
+    Any,
+    Dict,
+    Tuple
+)
+
+import numpy as np
+
+import torch
+
 from torchvision import transforms as T
 
 #TODO: Take more from Monai
@@ -86,3 +95,24 @@ def shared_transform(
         return T.Compose([
             T.ToTensor(),               
         ])
+
+
+def from_numpy(x: np.ndarray) -> torch.Tensor:
+    return torch.from_numpy(x)
+
+
+def compose(config: Dict[str, Any]) -> T.Compose:
+    transforms = []
+
+    for name, args in config:
+        if name == "Lambda":
+            transforms.append(
+                T.Lambda(lambda x: from_numpy(x)) # TODO: find fn in this module
+            )
+        else:
+            transform = getattr(T, name)
+            transforms.append(
+                transform(*args)
+            )
+
+    return T.Compose(transforms)
