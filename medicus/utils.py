@@ -17,6 +17,9 @@ import torchvision.transforms.functional as F
 import numpy as np
 from colour import Color
 
+import json
+import flatten_dict
+
 
 Device = Any
 
@@ -91,6 +94,25 @@ class ArgumentParser:
         return self.parser.parse_args()
 
 
-def parse(args: argparse.Namespace, **kwargs) -> dict:
+def parse(
+    args: argparse.Namespace, 
+    **kwargs
+) -> dict:
     config = {**vars(args), **kwargs}
     return config
+
+
+def load_cfg(
+    name,
+    args: argparse.Namespace
+) -> dict:
+    cfg = json.load(open(name))
+    cfg = flatten_dict.flatten(cfg)
+
+    for path, value in cfg.items():
+        key = path[-1]
+        if value is None and hasattr(args, key):
+            cfg[path] = getattr(args, key)
+
+    cfg = flatten_dict.unflatten(cfg)
+    return cfg
