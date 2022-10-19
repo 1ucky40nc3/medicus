@@ -172,9 +172,10 @@ def main():
     args = parser.parse_args()
 
     # Load the configs for the respective components
-    model_cfg = json.load(open(args.model))
-    optim_cfg = json.load(open(args.optim))
-    sched_cfg = json.load(open(args.sched))
+    model_cfg = medicus.utils.load_cfg(args.model, args)
+    optim_cfg = medicus.utils.load_cfg(args.optim, args)
+    sched_cfg = medicus.utils.load_cfg(args.sched, args)
+    data_cfg = medicus.utils.load_cfg(args.data, args)
 
     # Prepare the directories for logging and saving
     run_id = timestamp()
@@ -192,6 +193,7 @@ def main():
         model_cfg=model_cfg,
         optim_cfg=optim_cfg,
         sched_cfg=sched_cfg,
+        data_cfg=data_cfg,
         log_dir=log_dir,
         save_dir=save_dir
     )
@@ -210,6 +212,7 @@ def main():
     )
 
     # Prepare the data
+    """
     shared_transform = TF.Compose([
         TF.Lambda(lambda x: torch.from_numpy(x)),
         TF.Resize((104, 104)),
@@ -236,7 +239,9 @@ def main():
     test_dataloader = DataLoader(
         dataset=test_dataset,
         batch_size=args.batch_size
-    )
+    )"""
+    train_dataloader = medicus.data.load_dataset(args, "train")
+    test_dataloader = medicus.data.load_dataset(args, "test")
 
     # Retrieve the components implementations
     model = getattr(medicus.model, model_cfg["name"])
