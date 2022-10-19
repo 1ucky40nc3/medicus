@@ -3,13 +3,14 @@
         "name": "SharedTransformNumpyDataset",
         "config": {
             "base_dir": "{dataset_dir}/{dataset_name}",
-            "transforms": {
-                "resize": [104, 104]
-            }
+            "transforms": [
+                ["Lambda", "from_numpy"],
+                ["Resize", [104, 104]]
+            ]
         }
     },
     "dataloader": {
-        "name": null,
+        "name": "DataLoader",
         "config": {
             "batch_size": null
         }
