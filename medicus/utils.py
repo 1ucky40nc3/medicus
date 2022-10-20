@@ -104,9 +104,15 @@ def parse(
     return config
 
 
+class FormatDict(dict):
+    def __missing__(self, key):
+        return "{%s}" % str(key)
+
+
 def load_cfg(
     name,
-    args: argparse.Namespace
+    args: Optional[argparse.Namespace] = None,
+    **kwargs
 ) -> dict:
     cfg = json.load(open(name))
     cfg = flatten_dict.flatten(cfg)
@@ -117,7 +123,9 @@ def load_cfg(
             cfg[path] = getattr(args, key)
         
         if isinstance(value, str):
-            cfg[path] = value.format(**vars(args))
+            items = vars(args) if args is not None else {}
+            items = FormatDict(**items, **kwargs)
+            cfg[path] = value.format_map(items)
 
     cfg = flatten_dict.unflatten(cfg)
     return cfg
