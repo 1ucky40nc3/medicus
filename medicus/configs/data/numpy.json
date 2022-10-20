@@ -2,8 +2,8 @@
     "dataset": {
         "name": "SharedTransformNumpyDataset",
         "config": {
-            "sample_dir": "{dataset_dir}/{dataset_name}/train/samples",
-            "target_dir": "{dataset_dir}/{dataset_name}/train/targets"
+            "sample_dir": "{dataset_dir}/{dataset_name}/{split}/samples",
+            "target_dir": "{dataset_dir}/{dataset_name}/{split}/targets"
         },
         "transforms": [
             ["Lambda", ["from_numpy"]],
