@@ -106,8 +106,10 @@ def compose(config: Dict[str, Any]) -> T.Compose:
 
     for name, args in config:
         if name == "Lambda":
+            fn = args[0]
+            fn = getattr(globals(), fn)
             transforms.append(
-                T.Lambda(lambda x: from_numpy(x)) # TODO: find fn in this module
+                T.Lambda(lambda x: fn(x)) # TODO: find fn in this module
             )
         else:
             transform = getattr(T, name)
