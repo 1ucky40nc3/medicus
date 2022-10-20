@@ -12,12 +12,12 @@ def load_data(
     ds_cfg = cfg["dataset"]
     dl_cfg = cfg["dataloader"]
 
+    ds_cfg = medicus.utils.load_cfg(cfg=ds_cfg, split=split)
     dataset_cls =  medicus.utils.get_cls(
         medicus.data.datasets, 
         ds_cfg["name"]
     )
-    transforms = medicus.data.transforms.compose(
-        ds_cfg["transforms"])
+    transforms = medicus.data.transforms.compose(ds_cfg["transforms"])
 
     dataset = None or dataset_cls(
         transforms=transforms,
