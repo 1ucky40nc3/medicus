@@ -4,8 +4,8 @@
         "config": {
             "base_dir": "{dataset_dir}/{dataset_name}",
             "transforms": [
-                ["Lambda", "from_numpy"],
-                ["Resize", [104, 104]]
+                ["Lambda", ["from_numpy"]],
+                ["Resize", [[104, 104]]]
             ]
         }
     },
