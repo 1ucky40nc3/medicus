@@ -17,7 +17,7 @@ def load_data(
         ds_cfg["name"]
     )
     transforms = medicus.data.transforms.compose(
-        ds_cfg["config"]["transforms"])
+        ds_cfg["transforms"])
 
     dataset = None or dataset_cls(
         transforms=transforms,
