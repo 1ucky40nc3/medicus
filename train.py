@@ -213,7 +213,7 @@ def main():
 
     # Prepare the data
     train_dataloader = medicus.data.load_data(data_cfg, "train")
-    test_dataloader = medicus.data.load_data(data_cfg, "test")
+    test_dataloader = medicus.data.load_data(data_cfg, "eval")
 
     # Retrieve the components implementations
     model = getattr(medicus.model, model_cfg["name"])
