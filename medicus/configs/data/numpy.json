@@ -2,12 +2,12 @@
     "dataset": {
         "name": "SharedTransformNumpyDataset",
         "config": {
-            "base_dir": "{dataset_dir}/{dataset_name}",
-            "transforms": [
-                ["Lambda", ["from_numpy"]],
-                ["Resize", [[104, 104]]]
-            ]
-        }
+            "base_dir": "{dataset_dir}/{dataset_name}"
+        },
+        "transforms": [
+            ["Lambda", ["from_numpy"]],
+            ["Resize", [[104, 104]]]
+        ]
     },
     "dataloader": {
         "name": "DataLoader",
