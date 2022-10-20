@@ -6,7 +6,7 @@ import nnunet
 
 
 # Use the torch data loader by default
-DataLoader = torch.data.utils.DataLoader
+DataLoader = torch.utils.data.DataLoader
 
 
 class nnUNetDataLoader:
