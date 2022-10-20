@@ -110,11 +110,13 @@ class FormatDict(dict):
 
 
 def load_cfg(
-    name,
+    name: Optional[str] = None,
     args: Optional[argparse.Namespace] = None,
+    cfg: Optional[dict] = None,
     **kwargs
 ) -> dict:
-    cfg = json.load(open(name))
+    if name is not None:
+        cfg = json.load(open(name))
     cfg = flatten_dict.flatten(cfg)
 
     for path, value in cfg.items():
