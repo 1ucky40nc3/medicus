@@ -115,6 +115,9 @@ def load_cfg(
         key = path[-1]
         if value is None and hasattr(args, key):
             cfg[path] = getattr(args, key)
+        
+        if isinstance(value, str):
+            cfg[path] = value.format(**vars(args))
 
     cfg = flatten_dict.unflatten(cfg)
     return cfg
