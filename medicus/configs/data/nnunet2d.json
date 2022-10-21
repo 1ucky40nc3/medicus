@@ -18,7 +18,8 @@
             "unpack_data": true,
             "deterministic": true,
             "valbest": false,
-            "fp16": false
+            "fp16": false,
+            "split": "{split}"
         }
     }
 }
