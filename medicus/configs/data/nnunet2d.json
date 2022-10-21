@@ -7,7 +7,7 @@
     "dataloader": {
         "name": "DataLoader",
         "config": {
-            "task": null,
+            "task": "{task}",
             "fold": "all",
             "network": "2d_fullres",
             "network_trainer": "nnUNetTrainerV2",
