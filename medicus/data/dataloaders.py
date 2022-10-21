@@ -1,4 +1,7 @@
-from typing import Any
+from typing import (
+    Iterator,
+    Union
+)
 
 import torch
 
@@ -10,11 +13,37 @@ DataLoader = torch.utils.data.DataLoader
 
 
 class nnUNetDataLoader:
-    def __init__(self) -> None:
-        pass
+    def __init__(
+        self,
+        task: str,
+        fold: Union[str, int] = "all",
+        network: str = "2d_fullres",
+        network_trainer: str = "nnUNetTrainerV2",
+        validation_only: bool = False,
+        plans_identifier: str = "nnUNetPlansv2.1",
+        unpack_data: bool = True,
+        deterministic: bool = False,
+        fp16: bool = False,
+        split: str = "train",
+        **kwargs
+    ) -> None:
+        default = nnunet.run.default_configuration.get_default_configuration(
+            network, task, network_trainer, plans_identifier)
 
-    def __len__(self) -> int:
-        pass
+        trainer_class = default[5]
+        trainer = trainer_class(
+            plans_file=default[0],
+            fold=fold,
+            output_folder=default[1],
+            dataset_directory=default[2],
+            batch_dice=default[3],
+            stage=default[4],
+            unpack_data=unpack_data,
+            deterministic=deterministic,
+            fp16=fp16
+        )
+        trainer.initialize(not validation_only)
+        self.iter = trainer.tr_gen if split == "train" else trainer.val_gen
 
-    def __getitem__(self, idx: int) -> Any:
-        pass
+    def __iter__(self) -> Iterator:
+        return self.iter
