@@ -17,7 +17,7 @@ class nnUNetDataLoader:
         self,
         task: str,
         fold: Union[str, int] = "all",
-        network: str = "2d_fullres",
+        network: str = "2d",
         network_trainer: str = "nnUNetTrainerV2",
         validation_only: bool = False,
         plans_identifier: str = "nnUNetPlansv2.1",

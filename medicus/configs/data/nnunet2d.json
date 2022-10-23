@@ -9,7 +9,7 @@
         "config": {
             "task": "{task}",
             "fold": "all",
-            "network": "2d_fullres",
+            "network": "2d",
             "network_trainer": "nnUNetTrainerV2",
             "validation_only": false,
             "plans_identifier": "nnUNetPlansv2.1",
