@@ -6,6 +6,7 @@ from typing import (
 import torch
 
 import nnunet
+from nnunet.run import default_configuration as nnunet_default
 
 
 # Use the torch data loader by default
@@ -27,7 +28,7 @@ class nnUNetDataLoader:
         split: str = "train",
         **kwargs
     ) -> None:
-        default = nnunet.run.default_configuration.get_default_configuration(
+        default = nnunet_default.get_default_configuration(
             network, task, network_trainer, plans_identifier)
 
         trainer_class = default[5]
