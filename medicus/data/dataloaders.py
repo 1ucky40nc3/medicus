@@ -52,4 +52,5 @@ class nnUNetDataLoader:
 
     
     def __next__(self) -> Tuple[torch.Tensor]:
-        return self.gen.next()
+        data = self.gen.next()
+        return data["data"], data["target"]
