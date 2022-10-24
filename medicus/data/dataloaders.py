@@ -1,5 +1,6 @@
 from typing import (
     Iterator,
+    Tuple,
     Union
 )
 
@@ -44,7 +45,11 @@ class nnUNetDataLoader:
             fp16=fp16
         )
         trainer.initialize(not validation_only)
-        self.iter = trainer.tr_gen if split == "train" else trainer.val_gen
+        self.gen = trainer.tr_gen if split == "train" else trainer.val_gen
 
     def __iter__(self) -> Iterator:
-        return self.iter
+        return self
+
+    
+    def __next__(self) -> Tuple[torch.Tensor]:
+        return self.gen.next()
