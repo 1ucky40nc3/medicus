@@ -19,7 +19,8 @@
             "deterministic": true,
             "valbest": false,
             "fp16": false,
-            "split": "{split}"
+            "split": "{split}",
+            "batch_size": null
         }
     }
 }

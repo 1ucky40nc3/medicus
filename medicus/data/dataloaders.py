@@ -1,4 +1,5 @@
 from typing import (
+    Optional,
     Iterator,
     Tuple,
     Union
@@ -27,6 +28,7 @@ class nnUNetDataLoader:
         deterministic: bool = False,
         fp16: bool = False,
         split: str = "train",
+        batch_size: Optional[int] = None,
         **kwargs
     ) -> None:
         default = nnunet_default.get_default_configuration(
@@ -45,12 +47,12 @@ class nnUNetDataLoader:
             fp16=fp16
         )
         trainer.initialize(not validation_only)
+        trainer.batch_size = batch_size
         self.gen = trainer.tr_gen if split == "train" else trainer.val_gen
 
     def __iter__(self) -> Iterator:
         return self
 
-    
     def __next__(self) -> Tuple[torch.Tensor]:
         data = self.gen.next()
         return data["data"], data["target"]
