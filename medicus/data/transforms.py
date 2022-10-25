@@ -4,11 +4,15 @@ from typing import (
     Tuple
 )
 
+from random import random
+
 import numpy as np
 
 import torch
 
 from torchvision import transforms as T
+from torchvision.transforms import functional as F
+
 
 #TODO: Take more from Monai
 
@@ -37,64 +41,70 @@ class Normalize(object):
 
 
 def shared_transform(
-    crop: bool = False,
-    crop_size: Tuple = (50,50),
-    center_crop: bool = True,
-    center_crop_size: Tuple = (160,160),
-    input_size: Tuple = (160, 160),
-    rotate: bool = False,
-    rotate_range: Tuple = (-30, 30),
-    affine: bool = False,
-    translation_range: Tuple = (0, 0.5),
-    p: int = 0.2,
+    random_crop: int = 0,
+    affine: int = 0,
+    horizontal_flip: int = 0,
+    grayscale: int = 0,
 ) -> T.Compose:
-    transforms = [] # TODO: Actually use theese transforms ;)
+    transforms = []
 
-    if affine or rotate:
-        if rotate:
-            transform_rotation_range = rotate_range
-        else:
-            transform_rotation_range = 0
+    transforms.append(T.ToTensor())
+    rand_ints = np.random.rand(4)
 
-        if affine:
-            transform_affine_range = translation_range
-        else:
-            transform_affine_range = (0, 0)
-
+    if rand_ints[0] <= affine:
         transforms.append(
             T.RandomAffine(
-                degrees = transform_rotation_range,
-                translate = transform_affine_range,
+                degrees = (-60, 60),
+                translate = (0, 0.8),
             )
         )
 
-    if crop:
+    if rand_ints[1] <= random_crop:
         transforms.append(
-            T.RandomCrop(
-                crop_size, 
-                padding=(
-                    crop_size[0] // 4, 
-                    crop_size[1] // 4
-                )
-            )
+            T.RandomCrop(size = (128, 128))
+        )
+
+    if rand_ints[2] <= horizontal_flip:
+        transforms.append(
+            T.RandomHorizontalFlip(p = 1)
         )
     
-    if center_crop:
-        return T.Compose([
-            T.ToTensor(),
-            T.CenterCrop(center_crop_size),
-            T.RandomApply(transforms, p=p)                 
-        ])
-            
-    if len(transforms) > 0:
-        return T.Compose([
-            T.ToTensor(),
-            T.RandomApply(transforms, p=p)                 
-        ])
-    else:
-        return T.Compose([
-            T.ToTensor(),               
-        ])
+    if rand_ints[3] <= grayscale:
+        transforms.append(
+            T.Grayscale()
+        )
+
+    return T.Compose(transforms)
+
+
+def sample_transform(
+    color_jitter: int = 0,
+    blur: int = 0,
+)-> T.Compose:
+
+    transforms = []
+
+    rand_ints = np.random.rand(2)
+
+
+    if rand_ints[0] <= color_jitter:
+        bright = np.random.rand()
+        contrast = np.random.rand()
+        transforms.append(
+            T.ColorJitter(
+              brightness=bright,
+              contrast=contrast
+            )
+        )
+
+    if rand_ints[1] <= blur:
+        transforms.append(
+            T.GaussianBlur(9)
+        )
+
+    return T.Compose(
+        transforms
+    )
 
 
 def from_numpy(x: np.ndarray) -> torch.Tensor:

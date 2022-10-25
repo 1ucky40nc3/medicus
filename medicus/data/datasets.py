@@ -15,6 +15,7 @@ from PIL import Image
 
 import torch
 
+
 from medicus.data.utils import (
     list_dataset_files, 
     list_dir_dataset_files, 
@@ -26,7 +27,6 @@ from medicus.data.nib_utils import (
     resample_mask_to,
     pad_and_crop,
 )
-
 
 def identity(x: Any):
     return x
@@ -80,10 +80,10 @@ class SharedTransformDataset:
         #pat_dir -> True: für jeden Patienten existiert ein einzelner Unterordner, False: alle Dateien im gleichen Ordner
         if(pat_dir):
           samples_list, targets_list = list_dir_dataset_files(
-              sample_dir, target_dir)
+              sample_dir, target_dir, allow_different_names= True)
         else:
           samples_list, targets_list = list_dataset_files(
-              sample_dir, target_dir)
+              sample_dir, target_dir, allow_different_names= True)
 
         self.samples_list = samples_list
         self.targets_list = targets_list
@@ -278,6 +278,7 @@ class NiftiImageDataset:
         orientation: Tuple = ('I', 'P', 'R'),
         normalize: bool = True,
         format: str = "gz",
+        return_name: bool = False,
         **kwargs
     ) -> None:
     
@@ -292,6 +293,7 @@ class NiftiImageDataset:
         self.orientation = orientation
         self.normalize = normalize
         self.reshape = reshape
+        self.return_name = return_name
         
         if pat_dir:
             self.samples_list, self.targets_list = list_dir_dataset_files(
@@ -307,7 +309,7 @@ class NiftiImageDataset:
                 target_dir=self.mask_dir, 
                 sample_format=f".{format}",
                 target_format=f".{format}",
-                allow_different_names=True)
+                allow_different_names = True)
 
 
     def __len__(self):
@@ -346,6 +348,10 @@ class NiftiImageDataset:
         if self.normalize:
             sample = (sample - self.min_value) / (self.max_value - self.min_value)
             target = target / np.amax(target)
+        
+        if self.return_name:
+            return sample, target, Path(image_file).stem        
+
 
         return sample, target
 
