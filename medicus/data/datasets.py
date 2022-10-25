@@ -17,6 +17,7 @@ import torch
 
 from medicus.data.utils import list_dataset_files, list_dir_dataset_files, set_seed
 from medicus.data.nib_utils import *
+from pathlib import Path
 
 
 def identity(x: Any):
@@ -268,7 +269,8 @@ class NiftiImageDataset:
         reorientation: bool = True,
         orientation: Tuple = ('I', 'P', 'R'),
         normalize: bool = True,
-        format: str = "gz"
+        format: str = "gz",
+        return_name: bool = False,
     ) -> None:
     
         self.img_dir = Path(img_dir)
@@ -282,6 +284,7 @@ class NiftiImageDataset:
         self.orientation = orientation
         self.normalize = normalize
         self.reshape = reshape
+        self.return_name = return_name
         
         if pat_dir:
             self.samples_list, self.targets_list = list_dir_dataset_files(
@@ -336,6 +339,10 @@ class NiftiImageDataset:
         if self.normalize:
             sample = (sample - self.min_value) / (self.max_value - self.min_value)
             target = target / np.amax(target)
+        
+        if self.return_name:
+            return sample, target, Path(image_file).stem        
+
 
         return sample, target
 

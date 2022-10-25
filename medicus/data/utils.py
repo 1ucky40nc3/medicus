@@ -174,9 +174,15 @@ def save_data_as_png(target_dir, data, start_with = 0, addition = 1024, mult = 6
 
 def save_voxel_as_png(target_dir, data, addition = 0, mult = 1, isDataloader = True):
     if isDataloader:
-        for i, (x, y) in enumerate(data):
-            img_path = target_dir + f'/images/pat{i}'
-            mask_path = target_dir + f'/masks/pat{i}'
+        for i, z in enumerate(data):
+            if len(z) == 3:
+                x, y, name = z
+                img_path = target_dir + f'/images/{name}'
+                mask_path = target_dir + f'/masks/{name}'
+            else:
+                x, y = z
+                img_path = target_dir + f'/images/pat{i}'
+                mask_path = target_dir + f'/masks/pat{i}'
 
             if not os.path.exists(img_path): os.makedirs(img_path)
             if not os.path.exists(mask_path): os.makedirs(mask_path)
