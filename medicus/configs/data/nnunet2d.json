@@ -5,7 +5,7 @@
         "transforms": []
     },
     "dataloader": {
-        "name": "DataLoader",
+        "name": "nnUNetDataLoader",
         "config": {
             "task": "{task}",
             "fold": "all",
