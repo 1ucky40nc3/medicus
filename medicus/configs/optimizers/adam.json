@@ -1,0 +1,6 @@
+{
+    "name": "Adam",
+    "config": {
+        "lr": 1e-4
+    }
+}

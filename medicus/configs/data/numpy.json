@@ -1,0 +1,20 @@
+{
+    "dataset": {
+        "name": "SharedTransformNumpyDataset",
+        "config": {
+            "sample_dir": "{dataset_dir}/{dataset_name}/{split}/samples",
+            "target_dir": "{dataset_dir}/{dataset_name}/{split}/targets",
+            "return_untransformed_sample": false
+        },
+        "transforms": [
+            ["Lambda", ["from_numpy"]],
+            ["Resize", [[104, 104]]]
+        ]
+    },
+    "dataloader": {
+        "name": "DataLoader",
+        "config": {
+            "batch_size": null
+        }
+    }
+}

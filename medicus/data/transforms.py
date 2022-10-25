@@ -1,9 +1,18 @@
+from typing import (
+    Any,
+    Dict,
+    Tuple
+)
+
 from random import random
-from typing import Tuple
+
+import numpy as np
+
+import torch
+
 from torchvision import transforms as T
 from torchvision.transforms import functional as F
-import torch
-import numpy as np
+
 
 #TODO: Take more from Monai
 
@@ -82,8 +91,10 @@ def sample_transform(
         bright = np.random.rand()
         contrast = np.random.rand()
         transforms.append(
-            T.ColorJitter(brightness = bright,
-            contrast = contrast)
+            T.ColorJitter(
+              brightness=bright,
+              contrast=contrast
+            )
         )
 
     if rand_ints[1] <= blur:
@@ -95,3 +106,25 @@ def sample_transform(
         transforms
     )
 
+
+def from_numpy(x: np.ndarray) -> torch.Tensor:
+    return torch.from_numpy(x)
+
+
+def compose(config: Dict[str, Any]) -> T.Compose:
+    transforms = []
+
+    for name, args in config:
+        if name == "Lambda":
+            fn = args[0]
+            fn = globals()[fn]
+            transforms.append(
+                T.Lambda(lambda x: fn(x)) # TODO: find fn in this module
+            )
+        else:
+            transform = getattr(T, name)
+            transforms.append(
+                transform(*args)
+            )
+
+    return T.Compose(transforms)

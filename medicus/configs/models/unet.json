@@ -1,0 +1,7 @@
+{
+    "name": "UNet",
+    "config": {
+        "num_classes": 6,
+        "in_channels": 3
+    }
+}
