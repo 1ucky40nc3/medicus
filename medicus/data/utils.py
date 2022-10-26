@@ -216,6 +216,7 @@ class RegionGrow3D:
         lowerThreshold: unterer Schwellenwert für die benachbarten Voxel
         neighborMode: states wether to use just the direct neighbors ("6n") or the directional neighbors too ("26n")
         
+    from https://github.com/ylmzkaan/3DRegionGrowing/blob/master/RegionGrow3D.pyx
     """
     
     def __init__(self, images, masks, upperThreshold,
