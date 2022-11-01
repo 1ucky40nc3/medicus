@@ -44,9 +44,9 @@ class nnUNetDataLoader:
             stage=default[4],
             unpack_data=unpack_data,
             deterministic=deterministic,
-            fp16=fp16
+            fp16=fp16,
         )
-        trainer.initialize(not validation_only)
+        trainer.initialize(not validation_only, only_dl=True)
         trainer.batch_size = batch_size
         self.gen = trainer.tr_gen if split == "train" else trainer.val_gen
 
