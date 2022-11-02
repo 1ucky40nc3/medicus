@@ -1,25 +1,26 @@
-import argparse
-import time
-import torch
-import torch.nn as nn
+from typing import (
+    Any,
+    List,
+    Dict,
+    Tuple,
+    Optional,
+    Callable,
+)
 
-from typing import Tuple
-from typing import List
-from typing import Optional
-from typing import Callable
-from typing import Any
-from torch.utils.data import DataLoader
-from torchmetrics import MeanMetric
-from tqdm import tqdm
-from torch.utils import tensorboard
-import wandb
-import torchvision.transforms.functional as F
+import os
+import json
+import time
+import logging
+import argparse
+
+import flatten_dict
+
 import numpy as np
+
+import torch
+
 from colour import Color
 
-import json
-import flatten_dict
-import logging
 
 
 Device = Any
@@ -104,6 +105,33 @@ def parse(
     return config
 
 
+def parse_config_arg(
+    config: List[str],
+) -> Dict[str, Any]:
+    parsed = {}
+
+    for entry in config:
+        if os.path.isfile(entry):
+            return json.load(open(entry))
+
+        key, value = entry.split("=")
+        path = key.split(".")
+        parsed[path] = value
+
+    return flatten_dict.unflatten(parsed)
+
+
+def combine_dicts(
+    a: Dict[str, Any],
+    b: Dict[str, Any]
+) -> Dict[str, Any]:
+    a = flatten_dict.flatten(a)
+    b = flatten_dict.flatten(b)
+
+    c = {**a, **b}
+    return flatten_dict.unflatten(c)
+
+
 class FormatDict(dict):
     def __missing__(self, key):
         return "{%s}" % str(key)
@@ -113,11 +141,19 @@ def load_cfg(
     name: Optional[str] = None,
     args: Optional[argparse.Namespace] = None,
     cfg: Optional[dict] = None,
+    config: Dict[Any, str] = {},
     **kwargs
 ) -> dict:
-    if name is not None:
+    if name is not None and args is not None:
+        if args.config:
+            config = parse_config_arg(args.config)
+            config = config[name]
+
         cfg = getattr(args, name)
         cfg = json.load(open(cfg))
+
+        cfg = combine_dicts(config, cfg)
+
     cfg = flatten_dict.flatten(cfg)
 
     for path, value in cfg.items():
