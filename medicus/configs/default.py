@@ -46,6 +46,13 @@ def arguments() -> argparse.Namespace:
         help="A file describing your optimizer config"
     )
     parser.add_argument(
+        "--config",
+        nargs="*",
+        default="",
+        type=str,
+        help="Additional config outside of config files."
+    )
+    parser.add_argument(
         "--loss_fn",
         default="bce_and_softdiceloss",
         type=str,
