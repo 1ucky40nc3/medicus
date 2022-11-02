@@ -172,10 +172,10 @@ def main():
     args = parser.parse_args()
 
     # Load the configs for the respective components
-    model_cfg = medicus.utils.load_cfg(args.model, args)
-    optim_cfg = medicus.utils.load_cfg(args.optim, args)
-    sched_cfg = medicus.utils.load_cfg(args.sched, args)
-    data_cfg = medicus.utils.load_cfg(args.data, args)
+    model_cfg = medicus.utils.load_cfg("model", args)
+    optim_cfg = medicus.utils.load_cfg("optim", args)
+    sched_cfg = medicus.utils.load_cfg("sched", args)
+    data_cfg = medicus.utils.load_cfg("data", args)
 
     # Prepare the directories for logging and saving
     run_id = timestamp()
