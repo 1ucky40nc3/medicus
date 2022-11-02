@@ -147,12 +147,12 @@ def load_cfg(
     if name is not None and args is not None:
         if args.config:
             config = parse_config_arg(args.config)
-            config = config[name] if hasattr(config, name) else {}
+            config = config.get(name, {})
 
         cfg = getattr(args, name)
         cfg = json.load(open(cfg))
 
-        cfg = combine_dicts(config, cfg)
+        cfg = combine_dicts(cfg, config)
 
     cfg = flatten_dict.flatten(cfg)
 
@@ -167,6 +167,7 @@ def load_cfg(
             cfg[path] = value.format_map(items)
 
     cfg = flatten_dict.unflatten(cfg)
+    print(json.dumps(cfg))
     return cfg
 
 
