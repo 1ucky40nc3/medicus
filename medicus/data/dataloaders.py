@@ -5,6 +5,9 @@ from typing import (
     Union
 )
 
+import math
+import json
+
 import torch
 
 import nnunet
@@ -31,27 +34,50 @@ class nnUNetDataLoader:
         batch_size: Optional[int] = None,
         **kwargs
     ) -> None:
+        self.task = task
+        self.fold = fold
+        self.network = network
+        self.network_trainer = network_trainer
+        self.validation_only = validation_only
+        self.plans_identifier = plans_identifier
+        self.unpack_data = unpack_data
+        self.deterministic = deterministic
+        self.fp16 = fp16
+        self.split = split
+        self.batch_size = batch_size
+
         default = nnunet_default.get_default_configuration(
             network, task, network_trainer, plans_identifier)
 
-        trainer_class = default[5]
-        trainer = trainer_class(
-            plans_file=default[0],
+        self.plans_file = default[0]
+        self.output_folder = default[1]
+        self.dataset_directory = default[2]
+        self.batch_dice = default[3]
+        self.stage = default[4]
+        self.trainer_class = default[5]
+
+        self.trainer = self.trainer_class(
+            plans_file=self.plans_file,
             fold=fold,
-            output_folder=default[1],
-            dataset_directory=default[2],
-            batch_dice=default[3],
-            stage=default[4],
+            output_folder=self.output_folder,
+            dataset_directory=self.dataset_directory,
+            batch_dice=self.batch_dice,
+            stage=self.stage,
             unpack_data=unpack_data,
             deterministic=deterministic,
             fp16=fp16,
         )
-        trainer.initialize(not validation_only, only_dl=True)
-        trainer.batch_size = batch_size
-        self.gen = trainer.tr_gen if split == "train" else trainer.val_gen
+        self.trainer.initialize(not validation_only, only_dl=True)
+        self.gen = self.trainer.tr_gen if split == "train" else self.trainer.val_gen
+        self.gen.generator.batch_size = batch_size
+
+        self.dataset_config = json.load(open(f"{self.dataset_directory}/dataset.json"))
+        self.num_samples = len(self.dataset_config["training"])
+
 
     def __iter__(self) -> Iterator:
         return self
+
 
     def __next__(self) -> Tuple[torch.Tensor]:
         data = self.gen.next()
@@ -60,3 +86,6 @@ class nnUNetDataLoader:
         if isinstance(target, list):
             target = target[0]
         return sample, target
+
+    def __len__(self) -> int:
+        return math.ceil(self.num_samples / self.batch_size)
