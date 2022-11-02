@@ -3,6 +3,7 @@ from typing import (
     List,
     Dict,
     Tuple,
+    Union,
     Optional,
     Callable,
 )
@@ -105,6 +106,32 @@ def parse(
     return config
 
 
+def interpret_dtype(
+    value: str,
+    key: str,
+    message: str = "The config {key} couldn't be read as type: {dtype}."
+) -> Union[int, float, str]:
+    try:
+        return int(value)
+    except ValueError:
+        logging.error(
+            message.format(
+                key=key, 
+                dtype="int"
+            )
+        )
+    try:
+        return float(value)
+    except ValueError:
+        logging.error(
+            message.format(
+                key=key, 
+                dtype="float"
+            )
+        )
+    return value
+
+
 def parse_config_arg(
     config: List[str],
 ) -> Dict[str, Any]:
@@ -116,6 +143,7 @@ def parse_config_arg(
 
         key, value = entry.split("=")
         path = tuple(key.split("."))
+        value = interpret_dtype(value, key)
         parsed[path] = value
 
     return flatten_dict.unflatten(parsed)
