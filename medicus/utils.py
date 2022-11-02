@@ -116,7 +116,8 @@ def load_cfg(
     **kwargs
 ) -> dict:
     if name is not None:
-        cfg = json.load(open(name))
+        cfg = getattr(args, name)
+        cfg = json.load(open(cfg))
     cfg = flatten_dict.flatten(cfg)
 
     for path, value in cfg.items():
