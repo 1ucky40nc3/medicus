@@ -13,6 +13,8 @@ def load_data(
     dl_cfg = cfg["dataloader"]
 
     ds_cfg = medicus.utils.load_cfg(cfg=ds_cfg, split=split)
+    dl_cfg = medicus.utils.load_cfg(cfg=dl_cfg, split=split)
+
     dataset_cls =  medicus.utils.get_cls(
         medicus.data.datasets, 
         ds_cfg["name"]
@@ -21,7 +23,7 @@ def load_data(
 
     dataset = None or dataset_cls(
         transforms=transforms,
-        **ds_cfg["config"],
+        **ds_cfg.get("config", {}),
     )
 
     dataloader_cls = medicus.utils.get_cls(
@@ -32,7 +34,7 @@ def load_data(
     dataloader = dataloader_cls(
         dataset=dataset,
         shuffle=(split == "train"),
-        **dl_cfg["config"],
+        **dl_cfg.get("config", {}),
     )
 
     return dataloader
