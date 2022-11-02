@@ -7,7 +7,7 @@
     "dataloader": {
         "name": "nnUNetDataLoader",
         "config": {
-            "task": "{task}",
+            "task": "{dataset_name}",
             "fold": "all",
             "network": "2d",
             "network_trainer": "nnUNetTrainerV2",
