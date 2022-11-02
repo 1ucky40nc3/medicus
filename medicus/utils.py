@@ -115,7 +115,7 @@ def parse_config_arg(
             return json.load(open(entry))
 
         key, value = entry.split("=")
-        path = key.split(".")
+        path = tuple(key.split("."))
         parsed[path] = value
 
     return flatten_dict.unflatten(parsed)
@@ -147,7 +147,7 @@ def load_cfg(
     if name is not None and args is not None:
         if args.config:
             config = parse_config_arg(args.config)
-            config = config[name]
+            config = config[name] if hasattr(config, name) else {}
 
         cfg = getattr(args, name)
         cfg = json.load(open(cfg))
