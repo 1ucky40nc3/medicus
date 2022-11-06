@@ -27,7 +27,7 @@ def load_data(
     )
 
     dataloader_cls = medicus.utils.get_cls(
-        medicus.data.dataloaders, 
+        medicus.data.data_loaders, 
         dl_cfg["name"]
     )
 
