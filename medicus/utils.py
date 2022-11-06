@@ -208,3 +208,9 @@ def get_cls(
     except AttributeError:
         logging.error(f"The class {name} couldn't be retrieved from {module}")
     return None
+
+
+def to_device(t: torch.Tensor, device: str) -> torch.Tensor:
+    if t.device.type == device.type:
+        return t
+    return t.to(device)

@@ -49,6 +49,7 @@ import medicus
 
 from medicus.utils import (
     timestamp, 
+    to_device
 )
 
 from inference import inference
@@ -108,8 +109,8 @@ def train(
                 model.train()
                 optimizer.zero_grad()
 
-                x = x.to(device)
-                y = y.to(device)
+                x = to_device(x, device)
+                y = to_device(y, device)
 
                 outputs = model(x)
                 loss = loss_fn(outputs, y)
