@@ -75,9 +75,8 @@ class nnUNetDataLoader:
             pin_memory=pin_memory,
             convert_to_tensor=convert_to_tensor
         )
-        self.trainer.initialize(not validation_only, only_dl=True)
+        self.trainer.initialize(not validation_only, only_dl=True, batch_size=batch_size)
         self.gen = self.trainer.tr_gen if split == "train" else self.trainer.val_gen
-        self.gen.generator.batch_size = batch_size
 
         self.dataset_config = json.load(open(f"{self.dataset_directory}/dataset.json"))
         self.num_samples = len(self.dataset_config["training"])
