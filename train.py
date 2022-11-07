@@ -105,10 +105,6 @@ def train(
                     else:
                         continue
                 global_step = (j + 1) + i * len(iterator)
-                # Break the loop for continous data loaders
-                # if an epoch was basically completed
-                if global_step % len(iterator) == 0:
-                    break
 
                 model.train()
                 optimizer.zero_grad()
@@ -167,6 +163,11 @@ def train(
                         "inference_samples": inference_samples,
                         "inference_samples": inference_targets
                     }, f"{save_dir}/ckpt_{global_step}")
+
+                # Break the loop for continous data loaders
+                # if an epoch was basically completed
+                if global_step % len(iterator) == 0:
+                    break
 
 
 def main():
