@@ -32,6 +32,8 @@ class nnUNetDataLoader:
         fp16: bool = False,
         split: str = "train",
         batch_size: Optional[int] = None,
+        pin_memory: bool = False,
+        convert_to_tensor: bool = False,
         **kwargs
     ) -> None:
         self.task = task
@@ -45,6 +47,8 @@ class nnUNetDataLoader:
         self.fp16 = fp16
         self.split = split
         self.batch_size = batch_size
+        self.pin_memory = pin_memory
+        self.convert_to_tensor = convert_to_tensor
 
         default = nnunet_default.get_default_configuration(
             network, task, network_trainer, plans_identifier)
@@ -66,6 +70,8 @@ class nnUNetDataLoader:
             unpack_data=unpack_data,
             deterministic=deterministic,
             fp16=fp16,
+            pin_memory=pin_memory,
+            convert_to_tensor=convert_to_tensor
         )
         self.trainer.initialize(not validation_only, only_dl=True)
         self.gen = self.trainer.tr_gen if split == "train" else self.trainer.val_gen
@@ -83,8 +89,13 @@ class nnUNetDataLoader:
         data = self.gen.next()
         sample = data["data"]
         target = data["target"]
+
         if isinstance(target, list):
             target = target[0]
+
+        sample = torch.from_numpy(sample.cpu().numpy())
+        target = torch.from_numpy(target.cpu().numpy())
+
         return sample, target
 
     def __len__(self) -> int:
