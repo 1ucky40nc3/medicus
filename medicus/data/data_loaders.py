@@ -8,6 +8,8 @@ from typing import (
 import math
 import json
 
+import numpy as np
+
 import torch
 
 import nnunet
@@ -80,10 +82,8 @@ class nnUNetDataLoader:
         self.dataset_config = json.load(open(f"{self.dataset_directory}/dataset.json"))
         self.num_samples = len(self.dataset_config["training"])
 
-
     def __iter__(self) -> Iterator:
         return self
-
 
     def __next__(self) -> Tuple[torch.Tensor]:
         data = self.gen.next()
@@ -93,8 +93,10 @@ class nnUNetDataLoader:
         if isinstance(target, list):
             target = target[0]
 
-        sample = torch.from_numpy(sample.cpu().numpy())
-        target = torch.from_numpy(target.cpu().numpy())
+        if isinstance(sample, np.ndarray):
+            sample = torch.from_numpy(sample)
+        if isinstance(target, np.ndarray):
+            target = torch.from_numpy(target)
 
         return sample, target
 
