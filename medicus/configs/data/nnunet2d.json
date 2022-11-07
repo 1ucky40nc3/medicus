@@ -20,7 +20,9 @@
             "valbest": false,
             "fp16": false,
             "split": "{split}",
-            "batch_size": null
+            "batch_size": null,
+            "pin_memory": false,
+            "convert_to_tensor": false
         }
     }
 }
