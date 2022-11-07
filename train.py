@@ -105,6 +105,10 @@ def train(
                     else:
                         continue
                 global_step = (j + 1) + i * len(iterator)
+                # Break the loop for continous data loaders
+                # if an epoch was basically completed
+                if global_step % len(iterator) == 0:
+                    break
 
                 model.train()
                 optimizer.zero_grad()
