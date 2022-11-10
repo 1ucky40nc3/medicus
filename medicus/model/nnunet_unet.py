@@ -1,3 +1,4 @@
+from re import X
 from typing import (
     Union,
     Optional
@@ -77,4 +78,8 @@ class nnUNetUNet(nn.Module):
         self.model = self.trainer.network
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        return self.model(x)
+        x = self.model(x)
+        # nnUNet models output multiple segmentations 
+        # return the segmentation at the highest resolution
+        x = x[0]
+        return x
