@@ -68,5 +68,10 @@ def evaluate(
                 if (i + 1) % log_every == 0:
                     iterator.set_postfix(
                         mean_loss=metric.compute().item())
+                
+                # Break the loop for infinite data loaders
+                # if an an epoch is approximately completed                
+                if i >= len(iterator) - 1:
+                    break
 
     return metric.compute()

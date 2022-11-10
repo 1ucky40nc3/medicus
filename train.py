@@ -164,9 +164,9 @@ def train(
                         "inference_samples": inference_targets
                     }, f"{save_dir}/ckpt_{global_step}")
 
-                # Break the loop for continous data loaders
-                # if an epoch was basically completed
-                if global_step % len(iterator) == 0:
+                # Break the loop for infinite data loaders
+                # if an an epoch is approximately completed
+                if i >= len(iterator) - 1:
                     break
 
 
