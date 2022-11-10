@@ -10,7 +10,7 @@ import nnunet
 from nnunet.run import default_configuration as nnunet_default
 
 
-class nnUNet(nn.Module):
+class nnUNetUNet(nn.Module):
     def __init__(
         self,
         task: str,
