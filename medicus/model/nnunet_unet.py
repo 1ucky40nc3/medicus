@@ -28,6 +28,8 @@ class nnUNetUNet(nn.Module):
         convert_to_tensor: bool = False,
         **kwargs
     ) -> None:
+        super().__init__()
+
         self.task = task
         self.fold = fold
         self.network = network
