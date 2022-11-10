@@ -56,7 +56,7 @@ def evaluate(
 
     metric = MeanMetric()
     with torch.no_grad():
-        with tqdm(dataloader, desc=desc, unit="batch", **tqdm_config) as iterator:
+        with tqdm(dataloader, desc=desc, unit=" batch", **tqdm_config) as iterator:
             for i, (x, y) in enumerate(iterator):
                 x = x.to(device)
                 y = y.to(device)
