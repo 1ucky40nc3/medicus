@@ -1,28 +1,21 @@
 {
-    "dataset": {
-        "name": "nnUNetDataset",
-        "config": {},
-        "transforms": []
-    },
-    "dataloader": {
-        "name": "nnUNetDataLoader",
-        "config": {
-            "task": "{dataset_name}",
-            "fold": "all",
-            "network": "2d",
-            "network_trainer": "nnUNetTrainerV2",
-            "validation_only": false,
-            "plans_identifier": "nnUNetPlansv2.1",
-            "find_lr": false,
-            "disable_postprocessing_on_folds": false,
-            "unpack_data": true,
-            "deterministic": true,
-            "valbest": false,
-            "fp16": false,
-            "split": "{split}",
-            "batch_size": null,
-            "pin_memory": false,
-            "convert_to_tensor": false
-        }
+    "name": "nnUNetUNet",
+    "config": {
+        "task": "{dataset_name}",
+        "fold": "all",
+        "network": "2d",
+        "network_trainer": "nnUNetTrainerV2",
+        "validation_only": false,
+        "plans_identifier": "nnUNetPlansv2.1",
+        "find_lr": false,
+        "disable_postprocessing_on_folds": false,
+        "unpack_data": true,
+        "deterministic": true,
+        "valbest": false,
+        "fp16": false,
+        "split": "{split}",
+        "batch_size": null,
+        "pin_memory": false,
+        "convert_to_tensor": false
     }
 }
