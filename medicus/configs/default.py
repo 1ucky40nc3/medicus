@@ -72,7 +72,7 @@ def arguments() -> argparse.Namespace:
     )
     parser.add_argument(
         "--logging_method",
-        default="tensorboard",
+        default=["tensorboard"],
         nargs="+",
         type=str,
         help="A logging method (`tensorboard` or `wandb`)"
