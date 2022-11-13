@@ -73,7 +73,7 @@ class nnUNetLoss(nn.Module):
             init_data=False, 
             batch_size=batch_size,
             init_model=False,
-            init_optim=True
+            init_optim=False
         )        
         self.loss = self.trainer.loss
 
