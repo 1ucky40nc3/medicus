@@ -182,6 +182,7 @@ def main():
     optim_cfg = medicus.utils.load_cfg("optim", args)
     sched_cfg = medicus.utils.load_cfg("sched", args)
     data_cfg = medicus.utils.load_cfg("data", args)
+    loss_cfg = medicus.utils.load_cfg("loss", args)
 
     # Prepare the directories for logging and saving
     run_id = timestamp()
@@ -200,6 +201,7 @@ def main():
         optim_cfg=optim_cfg,
         sched_cfg=sched_cfg,
         data_cfg=data_cfg,
+        loss_cfg=loss_cfg,
         log_dir=log_dir,
         save_dir=save_dir
     )
@@ -225,7 +227,7 @@ def main():
     model = getattr(medicus.model, model_cfg["name"])
     optim = getattr(medicus.optim, optim_cfg["name"])
     sched = getattr(medicus.sched, sched_cfg["name"])
-    loss_fn = getattr(medicus.objectives, args.loss_fn)
+    loss = getattr(medicus.loss, loss_cfg["name"])
 
     # Initialize the model
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu") # TODO: let user specify device
@@ -235,6 +237,8 @@ def main():
     # Display the model
     sample, _ = next(iter(train_dataloader))
     summary(model, input_size=sample.shape[1:]) # TODO: where is the summary fn implemented?
+
+    loss_fn = loss(**loss_cfg["config"])
 
     # Initialize optimizer and the learning rate schedule
     optimizer = optim(model.parameters(), **optim_cfg["config"])
