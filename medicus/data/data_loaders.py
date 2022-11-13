@@ -84,6 +84,7 @@ class nnUNetDataLoader:
         )
         self.gen = self.trainer.tr_gen if split == "train" else self.trainer.val_gen
 
+        self.dataset = self.trainer.dataset_tr if split == "train" else self.trainer.dataset_val
         self.dataset_config = json.load(open(f"{self.dataset_directory}/dataset.json"))
         self.num_samples = len(self.dataset_config["training"])
 
