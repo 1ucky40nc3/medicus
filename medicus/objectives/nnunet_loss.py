@@ -72,8 +72,8 @@ class nnUNetLoss(nn.Module):
             training=not validation_only, 
             init_data=False, 
             batch_size=batch_size,
-            init_model=True,
-            init_optim=False
+            init_model=False,
+            init_optim=True
         )        
         self.loss = self.trainer.loss
 
