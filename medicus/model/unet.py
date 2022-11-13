@@ -26,6 +26,7 @@ class UNetConvLayer(nn.Module):
             kernel_size=kernel_size,
             padding=padding)
 
+        # TODO: add missing Batchnorm
         self.relu1 = nn.ReLU(inplace=True)
         self.relu2 = nn.ReLU(inplace=True)
 
