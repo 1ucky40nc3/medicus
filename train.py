@@ -66,6 +66,7 @@ def train(
     writer: medicus.logging.Writer,
     inference_samples: Optional[torch.Tensor] = None,
     inference_targets: Optional[torch.Tensor] = None,
+    batch_size: int = 32,
     num_epochs: int = 20,
     resume_epoch: int = 0,
     resume_step: int = 0,
@@ -90,8 +91,12 @@ def train(
         global_step
     )
 
+    num_epoch_batches = len(train_dataloader)
+    num_epoch_samples = len(train_dataloader.dataset)
+
     for i in range(resume_epoch, num_epochs):
-        desc = f"Training...[{i + 1}/{num_epochs}]"
+        current_epoch = global_step * batch_size // num_epoch_samples
+        desc = f"Training...[{current_epoch}/{num_epochs}]"
         tqdm_config = {"position": 0, "leave": False}
         with tqdm(train_dataloader, desc=desc, unit=" batch", **tqdm_config) as iterator:
             metric = MeanMetric()
@@ -158,7 +163,7 @@ def train(
                         "optimizer": optimizer.state_dict(),
                         "lr_scheduler": lr_scheduler.state_dict(),
                         "loss": loss,
-                        "epoch": i,
+                        "epoch": current_epoch,
                         "step": j,
                         "inference_samples": inference_samples,
                         "inference_samples": inference_targets
@@ -166,7 +171,7 @@ def train(
 
                 # Break the loop for infinite data loaders
                 # if an an epoch is approximately completed
-                if i >= len(iterator) - 1:
+                if i >= num_epoch_batches - 1:
                     break
 
 
@@ -282,6 +287,7 @@ def main():
         writer=writer,
         inference_samples=inference_samples,
         inference_targets=inference_targets,
+        batch_size=args.batch_size,
         num_epochs=args.num_epochs,
         resume_epoch=resume_epoch,
         resume_step=resume_step,
