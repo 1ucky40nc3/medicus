@@ -171,7 +171,7 @@ def train(
 
                 # Break the loop for infinite data loaders
                 # if an an epoch is approximately completed
-                if i >= num_epoch_batches - 1:
+                if j >= num_epoch_batches - 1:
                     break
 
 
