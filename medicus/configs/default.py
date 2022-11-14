@@ -34,6 +34,12 @@ def arguments() -> argparse.Namespace:
         help="A file describing your model config"
     )
     parser.add_argument(
+        "--loss",
+        default="medicus/configs/objectives/unet.json",
+        type=str,
+        help="The given name of a loss function config"
+    )
+    parser.add_argument(
         "--optim",
         default="medicus/configs/optimizers/adam.json",
         type=str,
@@ -51,12 +57,6 @@ def arguments() -> argparse.Namespace:
         default="",
         type=str,
         help="Additional config outside of config files."
-    )
-    parser.add_argument(
-        "--loss_fn",
-        default="bce_and_softdiceloss",
-        type=str,
-        help="The given name of a loss function"
     )
     parser.add_argument(
         "--log_every",
