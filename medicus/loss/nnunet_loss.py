@@ -78,5 +78,9 @@ class nnUNetLoss(nn.Module):
         self.loss = self.trainer.loss
 
     def forward(self, output: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
+        if not isinstance(output, (list, tuple)):
+            output = [output]
+        if not isinstance(target, (list, tuple)):
+            target = [target]
         x = self.loss(output, target)
         return x
