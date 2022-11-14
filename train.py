@@ -98,7 +98,7 @@ def train(
         current_epoch = global_step * batch_size // num_epoch_samples
         desc = f"Training...[{current_epoch}/{num_epochs}]"
         tqdm_config = {"position": 0, "leave": False}
-        with tqdm(train_dataloader, desc=desc, unit=" batch", **tqdm_config) as iterator:
+        with tqdm(train_dataloader, desc=desc, unit=" batch(s)", **tqdm_config) as iterator:
             metric = MeanMetric()
 
             for j, (x, y) in enumerate(iterator):
