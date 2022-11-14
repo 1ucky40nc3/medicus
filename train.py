@@ -1,49 +1,23 @@
-from pickletools import optimize
-from typing import Any
-from typing import Dict
-from typing import Tuple
-from typing import Callable
-from typing import Optional
-from typing import List
+from typing import (
+    Any,
+    Callable,
+    Optional,
+)
 
 import os
-import sys
 import math
 import json
-import logging
-import argparse
 
 from tqdm import tqdm
 
-import numpy as np
-
 import torch.nn as nn
-from torch.utils import tensorboard
 from torchmetrics import MeanMetric
-from torch.optim import lr_scheduler
 from torch.utils.data import DataLoader
 from torchsummary import summary
-from colour import Color
-
-import torchvision.transforms.functional as F
 
 import torch
 import torch.nn as nn
 import torch.optim as optim
-import torch.nn.functional as TNF
-
-import torchvision
-import torchvision.transforms as TF
-
-import time
-import copy
-
-from collections import defaultdict
-
-import wandb
-
-Device = Any
-LRScheduler = Any
 
 import medicus
 
@@ -54,6 +28,10 @@ from medicus.utils import (
 
 from inference import inference
 from evaluation import evaluate
+
+
+Device = Any
+LRScheduler = Any
 
 
 def train(
