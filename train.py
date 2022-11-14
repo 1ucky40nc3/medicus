@@ -11,8 +11,8 @@ import json
 from tqdm import tqdm
 
 import torch.nn as nn
-from torchmetrics import MeanMetric
 from torch.utils.data import DataLoader
+from torchmetrics import MeanMetric
 from torchsummary import summary
 
 import torch
