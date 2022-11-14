@@ -35,7 +35,7 @@ def arguments() -> argparse.Namespace:
     )
     parser.add_argument(
         "--loss",
-        default="medicus/configs/objectives/unet.json",
+        default="medicus/configs/losses/unet.json",
         type=str,
         help="The given name of a loss function config"
     )
