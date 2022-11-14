@@ -173,6 +173,8 @@ def train(
                 # if an an epoch is approximately completed
                 if j >= num_epoch_batches - 1:
                     break
+        # End the training if the the specified number of epochs
+        # is practically reached - a feature for infinite loaders
         if current_epoch > num_epochs:
             break
         
