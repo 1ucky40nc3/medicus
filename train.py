@@ -96,7 +96,7 @@ def train(
 
     for i in range(resume_epoch, num_epochs):
         current_epoch = global_step * batch_size // num_epoch_samples
-        desc = f"Training...[{current_epoch}/{num_epochs}]"
+        desc = f"Training... [{current_epoch}/{num_epochs}]"
         tqdm_config = {"position": 0, "leave": False}
         with tqdm(train_dataloader, desc=desc, unit=" batch(s)", **tqdm_config) as iterator:
             metric = MeanMetric()
@@ -173,6 +173,9 @@ def train(
                 # if an an epoch is approximately completed
                 if j >= num_epoch_batches - 1:
                     break
+        if current_epoch > num_epochs:
+            break
+        
 
 
 def main():
